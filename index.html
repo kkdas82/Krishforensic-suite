@@ -389,9 +389,17 @@
             </div>
 
             <!-- Target Selection Toggle for Customized CDR -->
-            <div style="background: #1f2937; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
-              <label style="margin:0; font-size:11px; font-weight:800; color:#93c5fd;">Target Toggle:</label>
-              <select id="customizedTargetDropdown" onchange="switchActiveTarget(this.value); renderCustomizedTable(cleanedMultiCDR.filter(r => r.A_Party === activeTargetNumber));" style="padding:4px 8px; font-weight:700; color:#ffffff; width:150px; background:#0b0f19; font-size:11px;"></select>
+            <div style="background: #1f2937; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: space-between;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <label style="margin:0; font-size:11px; font-weight:800; color:#93c5fd;">Target Toggle:</label>
+                <select id="customizedTargetDropdown" onchange="switchActiveTarget(this.value); renderCustomizedTable(cleanedMultiCDR.filter(r => r.A_Party === activeTargetNumber));" style="padding:4px 8px; font-weight:700; color:#ffffff; width:150px; background:#0b0f19; font-size:11px;"></select>
+              </div>
+              
+              <!-- Fixed Original Number Toggle in Customized CDR -->
+              <div class="switch-container">
+                <span>Original Numbers (+88013-+88019)</span>
+                <label class="switch"><input type="checkbox" id="customFilterOriginalBParty" onchange="applyCustomizedFilter()"><span class="slider"></span></label>
+              </div>
             </div>
 
             <div style="background: #1f2937; padding: 15px; border-radius: 10px; border: 1.5px solid var(--border); margin-bottom: 15px;">
@@ -406,12 +414,6 @@
                 <div>
                   <label>DIRECTION:</label>
                   <select id="customFilterDirection" style="background:#0b0f19; color:#ffffff;"><option value="Any">Any</option><option value="Incoming">Incoming (MTC/SMSMT)</option><option value="Outgoing">Outgoing (MOC/SMSMO)</option></select>
-                </div>
-                <div style="display: flex; align-items: flex-end;">
-                  <div class="switch-container" style="width:100%; justify-content: space-between;">
-                    <span>Original B-Party Only</span>
-                    <label class="switch"><input type="checkbox" id="customFilterOriginalBParty"><span class="slider"></span></label>
-                  </div>
                 </div>
               </div>
               <div style="display: flex; gap: 8px;">
@@ -545,7 +547,7 @@
               <div id="container-nightLocation"></div>
             </div>
 
-            <!-- Tab 6: IMEI Lookup -->
+            <!-- Tab 6: IMEI Lookup (Enhanced with interactive IMEI search links) -->
             <div id="tab-imei" class="tab-content">
               <div class="action-bar">
                 <div class="limit-selector">
@@ -1618,7 +1620,25 @@
 
     function isOriginalNumberFilter(num) {
       let sw = document.getElementById('originalNumbersSwitch');
-      if (!sw || !sw.checked) return true;
+      let customSw = document.getElementById('customFilterOriginalBParty');
+      let toolSw = document.getElementById('allBpartyOriginalToggle');
+      
+      let isChecked = false;
+      if (sw && sw.checked) isChecked = true;
+      if (customSw && customSw.checked) isChecked = true;
+      if (toolSw && toolSw.checked) isChecked = true;
+
+      // If no switch checked or if specific context checks apply
+      if (sw && document.getElementById('subSection-profileHub').classList.contains('active')) {
+        isChecked = sw.checked;
+      } else if (customSw && document.getElementById('subSection-customized').classList.contains('active')) {
+        isChecked = customSw.checked;
+      } else if (toolSw && document.getElementById('subSection-toolsHub').classList.contains('active')) {
+        isChecked = toolSw.checked;
+      }
+
+      if (!isChecked) return true;
+
       let clean = String(num).replace(/\D/g, "");
       if (clean.startsWith("880")) clean = clean.slice(3);
       if (clean.startsWith("0")) clean = clean.slice(1);
@@ -2012,7 +2032,7 @@
 
       let savedImeiModels = (globalProfileDB[activeTargetNumber] && globalProfileDB[activeTargetNumber].ImeiModels) ? globalProfileDB[activeTargetNumber].ImeiModels : {};
 
-      let hI = `<table id="table-imei"><thead><tr><th style="width:45px;">Ser</th><th>IMEI Number</th><th>Mobile Model Name</th><th style="width:130px;">Usage</th><th style="width:70px;">Action</th></tr></thead><tbody>`;
+      let hI = `<table id="table-imei"><thead><tr><th style="width:45px;">Ser</th><th>IMEI Number</th><th>Mobile Model Name</th><th style="width:130px;">Usage</th><th style="width:120px;">Action / Lookup</th></tr></thead><tbody>`;
       sortedI.forEach((i, idx) => {
         let dateRange = getDateRangeString(iMap[i].rows);
         let usageText = `${iMap[i].count}ti ${dateRange}`;
@@ -2026,7 +2046,12 @@
             <input type="text" value="${existingModel}" placeholder="Type model..." oninput="savePersistentProfileDB()" style="padding:4px; background:#0b0f19; color:#ffffff; font-size:11px; width:100%;">
           </td>
           <td><b>${usageText}</b></td>
-          <td><button class="btn btn-info" style="padding:2px 6px; font-size:10px;" onclick="viewCdrHistory('${i}', 'imei')">CDR</button></td>
+          <td>
+            <div style="display:flex; gap:4px; flex-wrap:wrap;">
+              <button class="btn btn-primary" style="padding:4px 8px; font-size:10px; margin:0;" onclick="window.open('https://www.imei.info/?imei=${correctedImei}', '_blank')">🔍 Lookup</button>
+              <button class="btn btn-info" style="padding:4px 8px; font-size:10px; margin:0;" onclick="viewCdrHistory('${i}', 'imei')">CDR</button>
+            </div>
+          </td>
         </tr>`;
       });
       document.getElementById('container-imei').innerHTML = hI + '</tbody></table>';
@@ -2136,7 +2161,7 @@
           nMap[r.B_Party].count++; nMap[r.B_Party].dur += r.Duration; nMap[r.B_Party].rows.push(r);
         }
       });
-      let sortedN = Object.keys(nMap).filter(b => nMap[b].count >= minUsageN).sort((a,b) => nMap[b].count - bMap[a].count);
+      let sortedN = Object.keys(nMap).filter(b => nMap[b].count >= minUsageN).sort((a,b) => nMap[b].count - nMap[a].count);
 
       htmlContent += `<div class="section-title">Night B-Party Usage (12 AM - 8 AM)</div>
         <table>
@@ -2273,11 +2298,18 @@
 
     function renderCustomizedTable(rows) {
       document.getElementById('customizedTargetTitle').innerText = `Customized CDR for Target: ${activeTargetNumber}`;
+      
+      let origBOnly = document.getElementById('customFilterOriginalBParty').checked;
+      let finalRows = rows.filter(r => {
+        if (origBOnly && !isOriginalNumberFilter(r.B_Party)) return false;
+        return true;
+      });
+
       let h = `<table id="table-customized"><thead><tr>
         <th style="width:95px;">Date</th><th style="width:75px;">Time</th><th>Aparty</th><th>Bparty/Name</th><th style="width:80px;">Duration</th><th style="width:70px;">Type</th><th style="width:70px;">Network</th><th style="width:70px;">LAC</th><th style="width:70px;">Cell</th><th>Imei</th><th>Address</th>
       </tr></thead><tbody>`;
 
-      rows.forEach(r => {
+      finalRows.forEach(r => {
         h += `<tr>
           <td>${r.Date}</td><td>${r.Time}</td><td>${r.A_Party}</td><td><b>${r.B_Party}</b></td><td>${r.Duration}</td><td>${r.UsageType}</td><td>${r.NetworkType}</td><td>${r.LAC}</td><td>${r.Cell}</td><td>${r.IMEI}</td><td>${r.Address}</td>
         </tr>`;
@@ -2303,7 +2335,6 @@
       });
 
       renderCustomizedTable(filtered);
-      alert(`Filter applied! Found ${filtered.length} records.`);
     }
 
     function resetCustomizedFilter() {
