@@ -1,0 +1,3497 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Forensic Suite - Master Intelligence Edition</title>
+  
+  <!-- SheetJS & Firebase SDKs -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+      tailwind.config = {
+          darkMode: 'class',
+          theme: {
+              extend: {
+                  colors: {
+                      dark: {
+                          bg: '#0b0f19',
+                          card: '#111827',
+                          border: '#1f2937',
+                          text: '#f3f4f6',
+                          muted: '#9ca3af'
+                      }
+                  }
+              }
+          }
+      }
+  </script>
+  <!-- FontAwesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --secondary: #0ea5e9;
+      --accent: #10b981;
+      --card-bg: #111827;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --border: #1f2937;
+      --radius: 16px;
+      --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+    }
+
+    body {
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #0b0f19;
+      background-image: linear-gradient(135deg, #0b0f19 0%, #111827 50%, #0f172a 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      user-select: text;
+    }
+
+    @media print {
+      body { background: white !important; color: #000 !important; padding: 0 !important; }
+      .no-print { display: none !important; }
+      .print-border { border: 1px solid #000 !important; }
+    }
+
+    #frontLoginScreen { max-width: 480px; margin: 80px auto; background: var(--card-bg); padding: 40px; border-radius: 24px; box-shadow: var(--shadow); text-align: center; backdrop-filter: blur(12px); border: 2px solid rgba(79, 70, 229, 0.3); }
+    .login-box h1 { color: #818cf8; margin-bottom: 8px; font-size: 26px; font-weight: 800; }
+    .login-box p { font-size: 13px; color: var(--text-muted); margin-bottom: 25px; }
+    .login-box input { width: 100%; padding: 12px 16px; margin-bottom: 15px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; outline: none; box-sizing: border-box; font-weight: bold; color: #ffffff; background: #0b0f19; transition: all 0.2s; }
+    .login-box input:focus { border-color: var(--primary); background: #111827; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25); }
+    .login-box button { width: 100%; padding: 12px; background: linear-gradient(135deg, #4f46e5, #6366f1); color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-size: 15px; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
+    .login-box button:hover { background: linear-gradient(135deg, #4338ca, #4f46e5); transform: translateY(-1px); }
+    .login-msg { font-size: 13px; margin-top: 12px; font-weight: 600; color: #ef4444; }
+
+    .module-card { background: var(--card-bg); border: 2px solid var(--border); border-radius: 22px; padding: 25px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: var(--shadow); display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; min-height: 160px; }
+    .module-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 5px; background: linear-gradient(90deg, var(--primary), var(--secondary)); }
+    .module-card:hover { border-color: var(--primary); transform: translateY(-4px); box-shadow: 0 25px 35px -10px rgba(79, 70, 229, 0.35); background: #1f2937; }
+    .module-card h3 { margin: 0 0 10px 0; color: #818cf8; font-size: 20px; font-weight: 900; }
+    
+    .container-box { max-width: 1400px; margin: 30px auto; background: var(--card-bg); padding: 25px; border-radius: 24px; box-shadow: var(--shadow); backdrop-filter: blur(12px); display: none; box-sizing: border-box; border: 1.5px solid var(--border); }
+    h1 { margin: 0; color: #818cf8; text-align: center; font-size: 28px; font-weight: 900; letter-spacing: -0.5px; }
+    .subtitle { text-align: center; color: var(--text-muted); font-size: 13px; margin-top: 6px; margin-bottom: 20px; font-weight: 600; }
+    
+    .section-card { margin-bottom: 25px; padding: 25px; border: 2px dashed #374151; border-radius: var(--radius); background: #0b0f19; text-align: center; }
+    input[type="file"], input[type="datetime-local"], input[type="date"] { font-size: 13px; padding: 8px 12px; background: #111827; border-radius: 8px; border: 1.5px solid var(--border); cursor: pointer; color: #ffffff; width: 100%; box-sizing: border-box; }
+    
+    .map-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-top: 15px; text-align: left; }
+    label { font-weight: 700; font-size: 11px; display: block; margin-bottom: 6px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    select, input[type="text"], textarea, input[type="email"], input[type="password"] { width: 100%; padding: 10px 14px; border-radius: 10px; border: 1.5px solid var(--border); font-size: 13px; background: #0b0f19; color: #ffffff; outline: none; box-sizing: border-box; font-weight: 600; transition: border-color 0.2s; }
+    select:focus, input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25); }
+
+    .btn { padding: 10px 16px; font-size: 13px; font-weight: 700; border-radius: 10px; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); width: 100%; }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), #6366f1); color: white; margin-top: 15px; font-size: 14px; padding: 12px; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
+    .btn-primary:hover { background: linear-gradient(135deg, var(--primary-hover), var(--primary)); transform: translateY(-1px); }
+    .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: white; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); }
+    .btn-secondary { background: linear-gradient(135deg, #64748b, #475569); color: white; }
+    .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+    .btn-info { background: linear-gradient(135deg, var(--secondary), #0284c7); color: white; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3); }
+    .btn-dark { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; }
+
+    .action-bar { margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; background: #1f2937; padding: 12px; border-radius: 12px; border: 1.5px solid var(--border); }
+    .limit-selector { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: #93c5fd; }
+
+    .sub-section-view { display: none; margin-top: 20px; background: #111827; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 20px; box-sizing: border-box; }
+    .sub-section-view.active { display: block; }
+
+    .tabs-header-wrapper { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 20px; border-bottom: 2.5px solid var(--primary); flex-wrap: wrap; padding-bottom: 0; }
+    .tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+    .tab-btn { padding: 10px 14px; border: none; background: #1f2937; cursor: pointer; font-weight: 700; border-radius: 10px 10px 0 0; font-size: 12px; color: var(--text-muted); transition: all 0.2s; }
+    .tab-btn.active { background: var(--primary); color: white; box-shadow: 0 -4px 12px rgba(79, 70, 229, 0.3); }
+    
+    .tab-content { display: none; margin-top: 0; max-height: 550px; overflow-y: auto; border: 1.5px solid var(--border); border-top: none; border-radius: 0 0 var(--radius) var(--radius); background: #111827; padding: 15px; box-sizing: border-box; }
+    .tab-content.active { display: block; }
+    
+    table { width: 100%; border-collapse: collapse; font-size: 12px; color: #f3f4f6; table-layout: fixed; }
+    th, td { border: 1.5px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; word-break: break-word; overflow: hidden; }
+    th { background: #1f2937; position: sticky; top: 0; color: #ffffff; font-weight: 800; z-index: 10; border-bottom: 2px solid var(--primary); }
+    tr:nth-child(even) { background-color: rgba(31, 41, 55, 0.4); }
+    tr:hover { background-color: rgba(31, 41, 55, 0.8); }
+    
+    .profile-card { background: #1f2937; border: 2px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow); }
+    .profile-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; align-items: center; }
+    
+    .resizable-img-box { width: 110px; height: 130px; border: 2px dashed var(--primary); border-radius: 10px; background: #0b0f19; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; resize: both; overflow: auto; min-width: 90px; min-height: 100px; max-width: 250px; max-height: 300px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+    .resizable-img-box img { width: 100%; height: 100%; object-fit: cover; }
+
+    .bparty-img-cell { width: 100%; height: 100px; border: 2px dashed #4b5563; border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; background: #0b0f19; position: relative; resize: both; overflow: auto; min-width: 70px; min-height: 80px; max-width: 100%; max-height: 300px; margin-top: 6px; }
+    .bparty-img-cell img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
+
+    .switch-container { display: flex; align-items: center; gap: 8px; background: #1f2937; padding: 6px 12px; border-radius: 10px; border: 1.5px solid var(--border); font-size: 11px; font-weight: 700; color: #93c5fd; }
+    .switch { position: relative; display: inline-block; width: 34px; height: 18px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; inset: 0; background-color: #4b5563; transition: .3s; border-radius: 18px; }
+    .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+    input:checked + .slider { background-color: var(--primary); }
+    input:checked + .slider:before { transform: translateX(16px); }
+
+    .link-highlight { color: #f87171; font-weight: bold; word-break: break-all; display: inline-block; margin-top: 4px; }
+    .utility-link { color: #34d399; font-weight: bold; word-break: break-all; display: inline-block; margin-top: 4px; background: rgba(5, 150, 105, 0.2); padding: 3px 8px; border-radius: 6px; border: 1px solid #059669; }
+    .dpdc-link { color: #38bdf8; font-weight: bold; word-break: break-all; display: inline-block; margin-top: 4px; background: rgba(2, 132, 199, 0.2); padding: 3px 8px; border-radius: 6px; border: 1px solid #0284c7; }
+    .desco-link { color: #fbbf24; font-weight: bold; word-break: break-all; display: inline-block; margin-top: 4px; background: rgba(217, 119, 6, 0.2); padding: 3px 8px; border-radius: 6px; border: 1px solid #d97706; }
+    .mfs-link { color: #f472b6; font-weight: bold; word-break: break-all; display: inline-block; margin-top: 4px; background: rgba(219, 39, 119, 0.2); padding: 3px 8px; border-radius: 6px; border: 1px solid #db2777; cursor: pointer; }
+    .party-link { color: #c084fc; background: rgba(124, 58, 237, 0.2); padding: 2px 6px; border-radius: 4px; border: 1px solid #7c3aed; cursor: pointer; font-weight: bold; }
+    .number-selector-box { background: #0b0f19; border: 1px solid var(--border); padding: 6px; border-radius: 8px; max-height: 120px; overflow-y: auto; width: 100%; font-size: 12px; }
+    .paste-section { background: #1f2937; padding: 15px; border: 1.5px solid var(--border); border-radius: 12px; margin-bottom: 15px; }
+  </style>
+</head>
+<body tabindex="0" onpaste="handleTargetedGlobalCtrlV(event)">
+
+  <!-- 1. Cloud Login Screen -->
+  <div id="frontLoginScreen">
+    <div class="login-box" style="width: 100%;">
+      <h1>Secure Cloud Forensic Suite</h1>
+      <p>Secure Master Intelligence & Evidence Analysis Login</p>
+      <div style="text-align: left; margin-bottom: 12px;"><label>Email Address:</label><input type="email" id="loginEmail" placeholder="Enter authorized email"></div>
+      <div style="text-align: left; margin-bottom: 20px;"><label>Password:</label><input type="password" id="loginPassword" placeholder="Enter password"></div>
+      <button onclick="verifyCloudUserLogin()">Login to Cloud Suite</button>
+      <p id="frontLoginMsg" class="login-msg"></p>
+    </div>
+  </div>
+
+  <!-- Top Header Bar -->
+  <header id="topHeaderBar" class="bg-dark-card border-b border-dark-border h-16 flex items-center justify-between px-4 fixed top-0 left-0 right-0 z-50 shadow-md" style="display:none; background:#111827; border-color:#1f2937;">
+    <div class="flex items-center space-x-2">
+      <button onclick="toggleSidebar()" class="font-bold text-xs tracking-wide text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border border-dark-border transition cursor-pointer">
+        <i class="fa-solid fa-bars text-xs mr-1"></i> Menu
+      </button>
+      <span class="text-[11px] text-dark-muted hidden sm:inline" id="userInfoDisplay">Connected: <strong class="text-blue-400">Admin Mode</strong></span>
+    </div>
+    <div class="flex items-center space-x-2">
+      <button onclick="exportFullMemoryBackup()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition" title="Export Backup JSON">
+        <i class="fa-solid fa-download mr-1"></i> Export
+      </button>
+      <button onclick="document.getElementById('importMemoryInput').click()" class="bg-cyan-600 hover:bg-cyan-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition" title="Restore Backup JSON">
+        <i class="fa-solid fa-upload mr-1"></i> Restore
+      </button>
+      <input type="file" id="importMemoryInput" accept=".json" style="display:none" onchange="importFullMemoryBackup(event)">
+      
+      <button onclick="performLogout()" class="bg-red-600 hover:bg-red-700 text-white text-[11px] font-semibold px-3 py-1.5 rounded-lg transition shadow-md">
+        Logout
+      </button>
+    </div>
+  </header>
+
+  <!-- Main App Layout with Sliding Sidebar -->
+  <div id="appMainLayout" style="display: none; padding-top: 64px; min-height: 100vh; position: relative;">
+    
+    <!-- Left Navigation Sidebar Panel -->
+    <aside id="leftSidebar" style="position: fixed; top: 64px; left: 0; bottom: 0; width: 260px; background: #111827; border-right: 1.5px solid #1f2937; z-index: 40; transition: transform 0.3s ease; display: flex; flex-direction: column; justify-content: space-between; padding: 15px; box-sizing: border-box; overflow-y: auto;">
+      <div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #1f2937; padding-bottom: 10px;">
+          <span style="font-size: 10px; font-weight: bold; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px;">NAVIGATION MENU</span>
+          <button onclick="toggleSidebar()" style="background: none; border: none; color: #9ca3af; font-size: 12px; font-weight: bold; cursor: pointer;"><i class="fa-solid fa-xmark"></i> Hide</button>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <button onclick="openModule('home')" style="width: 100%; text-align: left; padding: 10px; border-radius: 8px; border: none; background: transparent; color: #f3f4f6; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-house"></i> Dashboard Home</button>
+          <button onclick="openModule('cdr')" style="width: 100%; text-align: left; padding: 10px; border-radius: 8px; border: none; background: transparent; color: #9ca3af; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-phone-volume"></i> CDR Analyser Module</button>
+          <button onclick="openModule('sms')" style="width: 100%; text-align: left; padding: 10px; border-radius: 8px; border: none; background: transparent; color: #9ca3af; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-comment-sms"></i> SMS Analyser Module</button>
+          <button onclick="openModule('mfs')" style="width: 100%; text-align: left; padding: 10px; border-radius: 8px; border: none; background: transparent; color: #9ca3af; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-wallet"></i> MFS Statement Analyser</button>
+          <button onclick="openModule('guide')" style="width: 100%; text-align: left; padding: 10px; border-radius: 8px; border: none; background: transparent; color: #9ca3af; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-book"></i> User Manual & Query</button>
+        </div>
+
+        <!-- Sidebar Global Search -->
+        <div id="sidebarGlobalSearchContainer" style="display:none; margin-top: 20px; border-top: 1px solid #1f2937; padding-top: 12px;">
+          <p style="font-size: 10px; font-weight: bold; color: #818cf8; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">🔍 Global Search</p>
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <input type="text" id="adminGlobalSearchInput" placeholder="Enter phone or name..." style="font-size: 11px; padding: 6px;">
+            <button class="btn btn-primary" style="margin: 0; padding: 6px; font-size: 11px;" onclick="runAdminGlobalSearch()">Search Global DB</button>
+          </div>
+          <div id="adminGlobalSearchResultContainer" style="margin-top: 6px; max-height: 150px; overflow-y: auto; font-size: 11px;"></div>
+        </div>
+      </div>
+
+      <!-- Sidebar Bottom IMEI Lookup Box -->
+      <div style="margin-top: 15px; border-top: 1px solid #1f2937; padding-top: 12px;">
+        <p style="font-size: 10px; font-weight: bold; color: #9ca3af; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">IMEI LOOKUP</p>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <input type="text" id="sidebar-imei-input" placeholder="Enter 14-15 digit IMEI" maxlength="15" style="font-size: 11px; padding: 6px;">
+          <button onclick="lookupSidebarIMEI()" class="btn btn-primary" style="margin: 0; padding: 6px; font-size: 11px;">Check on IMEI.info</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area Wrapper -->
+    <div id="mainContentWrapper" style="margin-left: 260px; transition: margin 0.3s ease; padding: 20px; box-sizing: border-box;">
+      
+      <!-- 2. Landing Module Selector Page -->
+      <div id="landingPageContainer" style="display: block;">
+        <div class="landing-header" style="max-width: 1200px; margin: 0 auto 20px auto; text-align: left;">
+          <h1 style="color: #ffffff; font-size: 26px; font-weight: 900; margin-bottom: 6px;">Advanced Forensic Intelligence Suite</h1>
+          <div class="subtitle" style="text-align: left; color: #9ca3af; font-size: 13px; margin: 0;">Select intelligence analysis module below to start investigation workflow:</div>
+        </div>
+
+        <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 15px;">
+          <div class="module-cards-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px;">
+            <div class="module-card" onclick="openModule('cdr')">
+              <div>
+                <h3>CDR Analyser Module</h3>
+                <p style="font-size: 12px; color: #9ca3af; margin-top: 6px; line-height: 1.4;">Multi-CDR parsing, B-party, location & IMEI tracking.</p>
+              </div>
+              <div style="margin-top: 12px; font-weight: 700; color: #818cf8; font-size: 12px;">Launch CDR Module →</div>
+            </div>
+
+            <div class="module-card" onclick="openModule('sms')" style="border-color: rgba(16, 185, 129, 0.3);">
+              <div style="position: absolute; top:0; left:0; width:100%; height:5px; background: linear-gradient(90deg, #10b981, #059669);"></div>
+              <div>
+                <h3 style="color: #34d399;">SMS Analyser Module</h3>
+                <p style="font-size: 12px; color: #9ca3af; margin-top: 6px; line-height: 1.4;">Multi-operator SMS log chronology & utility link extraction.</p>
+              </div>
+              <div style="margin-top: 12px; font-weight: 700; color: #34d399; font-size: 12px;">Launch SMS Module →</div>
+            </div>
+
+            <div class="module-card" onclick="openModule('mfs')" style="border-color: rgba(245, 158, 11, 0.3);">
+              <div style="position: absolute; top:0; left:0; width:100%; height:5px; background: linear-gradient(90deg, #f59e0b, #d97706);"></div>
+              <div>
+                <h3 style="color: #fbbf24;">MFS Statement Analyser</h3>
+                <p style="font-size: 12px; color: #9ca3af; margin-top: 6px; line-height: 1.4;">bKash, Nagad & Rocket financial transaction analytics.</p>
+              </div>
+              <div style="margin-top: 12px; font-weight: 700; color: #fbbf24; font-size: 12px;">Launch MFS Module →</div>
+            </div>
+
+            <div class="module-card" onclick="openModule('guide')" style="border-color: rgba(16, 185, 129, 0.3);">
+              <div>
+                <h3 style="color: #34d399;">User Manual & Query</h3>
+                <p style="font-size: 12px; color: #9ca3af; margin-top: 6px; line-height: 1.4;">Bilingual operational guide & investigator support contact.</p>
+              </div>
+              <div style="margin-top: 12px; font-weight: 700; color: #34d399; font-size: 12px;">Open User Guide →</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Main CDR Dashboard Container -->
+      <div class="container-box" id="mainDashboardContainer">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+          <button class="btn btn-secondary" style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="openModule('home')">← Back to Modules</button>
+          <button class="btn btn-danger" style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="cancelAndResetCurrentCDR()">✕ Cancel / Reset Current CDR</button>
+        </div>
+        
+        <h1>Advanced CDR Analyser for Investigators</h1>
+        <div class="subtitle">Advanced CDR & SMS Analyser for Investigators (Cloud Edition)</div>
+
+        <div class="section-card" id="uploadSection">
+          <h3 style="margin-top:0; color:#ffffff; font-size:16px;">📂 Multi-CDR Data Management & Permanent Sessions</h3>
+          <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 12px;">
+            <input type="file" id="fileInput" multiple accept=".csv, .xlsx, .xls">
+          </div>
+          <div style="margin-top: 15px; padding-top: 12px; border-top: 1px solid var(--border);">
+            <label style="font-weight:800; color:#818cf8; margin-bottom:6px;">📥 IMPORT PREVIOUSLY SAVED WORD PROFILE (.doc / .html):</label>
+            <input type="file" id="wordProfileImportInput" accept=".doc, .html, .txt" onchange="importWordProfile(event)">
+          </div>
+          <div style="margin-top: 12px;">
+            <label style="font-weight:800; color:#818cf8; margin-bottom:6px;">📋 OR PASTE PROFILE / CDR TEXT DATA HERE:</label>
+            <textarea id="pasteProfileInput" rows="2" placeholder="Paste data here..." style="font-family:monospace;"></textarea>
+            <button class="btn btn-primary" style="margin-top:6px; width:auto; padding:8px 16px;" onclick="processPastedProfileData()">⚡ Auto-Match & Import Data</button>
+          </div>
+        </div>
+
+        <div id="mappingPanel" style="display: none; text-align: left; border: 2px solid var(--primary); padding: 20px; border-radius: 16px; background: #111827; box-shadow: var(--shadow); margin-bottom: 20px;">
+          <h4 id="mappingPanelTitle" style="margin: 0 0 12px 0; color: #818cf8; font-size: 16px;">Column Mapping & Custom Project Naming</h4>
+          <div style="margin-bottom: 15px; background: #1f2937; padding: 12px; border-radius: 10px; border: 1.5px solid var(--border);">
+            <label style="color: #93c5fd; font-size: 12px; font-weight: 800; margin-bottom: 4px;">📁 Custom Project / Case Name:</label>
+            <input type="text" id="customProjectNameInput" value="Case_01_Investigation" style="font-weight: 700; color: #ffffff;">
+          </div>
+
+          <div style="margin-bottom: 15px; background: #1f2937; padding: 12px; border-radius: 10px; border: 1.5px solid var(--border);">
+            <label style="color: #93c5fd; font-size: 12px; font-weight: 700; margin-bottom: 4px;">Select Operator (Auto Preset Mapping):</label>
+            <select id="selectOperatorPreset" onchange="applyOperatorPreset(this.value)" style="font-weight: 700; color: #ffffff; padding: 8px;">
+              <option value="Custom">-- Custom / Auto Detect --</option>
+              <option value="Grameenphone">Grameenphone (GP)</option>
+              <option value="Banglalink">Banglalink</option>
+              <option value="Robi">Robi</option>
+              <option value="Teletalk">Teletalk</option>
+            </select>
+          </div>
+
+          <div class="map-grid">
+            <div><label>Date Column:</label><select id="colDate"></select></div>
+            <div><label>Time Column (Optional):</label><select id="colTime"></select></div>
+            <div><label>A Party (APARTY / MSISDN):</label><select id="colA"></select></div>
+            <div><label>B Party (BPARTY / Called):</label><select id="colB"></select></div>
+            <div><label>Duration:</label><select id="colDuration"></select></div>
+            <div><label>IMEI Column:</label><select id="colImei"></select></div>
+            <div><label>Type:</label><select id="colType"></select></div>
+            <div><label>Direction:</label><select id="colDirection"></select></div>
+            <div><label>Address / Location:</label><select id="colAddress"></select></div>
+            <div><label>LAC:</label><select id="colLac"></select></div>
+            <div><label>Cell ID:</label><select id="colCell"></select></div>
+          </div>
+          
+          <button class="btn btn-primary" onclick="confirmMappingAndProcess()" style="margin-top:15px;">⚡ Process & Launch Dashboard</button>
+        </div>
+
+        <div id="dashboard" style="display: none;">
+          <!-- Compact Inline Top Bar for Target, Report Scope, Save & Print/Upload -->
+          <div style="background: #1f2937; padding: 10px 14px; border-radius: 12px; border: 1.5px solid var(--border); margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <label style="margin:0; font-size:11px; font-weight:800; color:#93c5fd;">Target:</label>
+              <select id="activeTargetDropdown" onchange="switchActiveTarget(this.value)" style="padding:6px; font-weight:700; color:#ffffff; width:150px; background:#0b0f19; font-size:11px;"></select>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+              <button class="btn btn-primary" style="margin:0; padding:6px 10px; font-size:11px; width:auto;" onclick="savePersistentProfileDB(); alert('Saved successfully!');">💾 Save</button>
+              <button class="btn btn-secondary" style="margin:0; padding:6px 10px; font-size:11px; width:auto;" onclick="triggerAddMoreFiles()">+ Add Files</button>
+              <input type="file" id="addMoreFileInput" multiple accept=".csv, .xlsx, .xls" style="display:none" onchange="appendMoreCDRFiles(event)">
+            </div>
+          </div>
+          
+          <div id="targetProfilesContainer"></div>
+
+          <!-- Click-Based Hub / Card Navigation for Mobile Friendliness -->
+          <div id="mainHubMenu" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-bottom: 20px;">
+            <div class="module-card" onclick="openSubSection('customized')">
+              <div>
+                <h3>Customized CDR</h3>
+                <p style="font-size: 11px; color: #9ca3af; margin-top: 6px;">Filter call logs by date, type, direction & export.</p>
+              </div>
+              <div style="margin-top: 10px; font-weight: 700; color: #818cf8; font-size: 12px;">Open Customized CDR →</div>
+            </div>
+
+            <div class="module-card" onclick="openSubSection('profileHub')" style="border-color: rgba(16, 185, 129, 0.3);">
+              <div style="position: absolute; top:0; left:0; width:100%; height:4px; background: linear-gradient(90deg, #10b981, #059669);"></div>
+              <div>
+                <h3 style="color: #34d399;">Profile & Analysis Hub</h3>
+                <p style="font-size: 11px; color: #9ca3af; margin-top: 6px;">B-Party, Night B-Party, Locations, IMEI & Common Analysis.</p>
+              </div>
+              <div style="margin-top: 10px; font-weight: 700; color: #34d399; font-size: 12px;">Open Profile Hub →</div>
+            </div>
+
+            <div class="module-card" onclick="openSubSection('toolsHub')" style="border-color: rgba(245, 158, 11, 0.3);">
+              <div style="position: absolute; top:0; left:0; width:100%; height:4px; background: linear-gradient(90deg, #f59e0b, #d97706);"></div>
+              <div>
+                <h3 style="color: #fbbf24;">Number Sorter & Extractors</h3>
+                <p style="font-size: 11px; color: #9ca3af; margin-top: 6px;">All B-Party extractor, IMEI sorter & operator number formatting.</p>
+              </div>
+              <div style="margin-top: 10px; font-weight: 700; color: #fbbf24; font-size: 12px;">Open Sorter Tools →</div>
+            </div>
+          </div>
+
+          <!-- SUB-SECTION 1: Customized CDR View -->
+          <div id="subSection-customized" class="sub-section-view">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+              <h3 style="margin:0; color:#818cf8; font-size:16px;">Customized CDR View</h3>
+              <button class="btn btn-secondary" style="width:auto; padding:4px 10px; font-size:11px;" onclick="closeSubSection()">← Back to Hub</button>
+            </div>
+
+            <!-- Target Selection Toggle for Customized CDR -->
+            <div style="background: #1f2937; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+              <label style="margin:0; font-size:11px; font-weight:800; color:#93c5fd;">Target Toggle:</label>
+              <select id="customizedTargetDropdown" onchange="switchActiveTarget(this.value); renderCustomizedTable(cleanedMultiCDR.filter(r => r.A_Party === activeTargetNumber));" style="padding:4px 8px; font-weight:700; color:#ffffff; width:150px; background:#0b0f19; font-size:11px;"></select>
+            </div>
+
+            <div style="background: #1f2937; padding: 15px; border-radius: 10px; border: 1.5px solid var(--border); margin-bottom: 15px;">
+              <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 10px;">
+                <div><label>FROM:</label><input type="datetime-local" id="customFilterFrom"></div>
+                <div><label>TO:</label><input type="datetime-local" id="customFilterTo"></div>
+                <div><label>SINGLE DAY:</label><input type="date" id="customFilterSingleDay"></div>
+                <div>
+                  <label>TYPE:</label>
+                  <select id="customFilterType" style="background:#0b0f19; color:#ffffff;"><option value="All">All</option><option value="Voice">Voice</option><option value="SMS">SMS</option></select>
+                </div>
+                <div>
+                  <label>DIRECTION:</label>
+                  <select id="customFilterDirection" style="background:#0b0f19; color:#ffffff;"><option value="Any">Any</option><option value="Incoming">Incoming (MTC/SMSMT)</option><option value="Outgoing">Outgoing (MOC/SMSMO)</option></select>
+                </div>
+                <div style="display: flex; align-items: flex-end;">
+                  <div class="switch-container" style="width:100%; justify-content: space-between;">
+                    <span>Original B-Party Only</span>
+                    <label class="switch"><input type="checkbox" id="customFilterOriginalBParty"><span class="slider"></span></label>
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-primary" style="margin:0; width:auto; padding:8px 16px;" onclick="applyCustomizedFilter()">Apply Filter</button>
+                <button class="btn btn-secondary" style="margin:0; width:auto; padding:8px 16px;" onclick="resetCustomizedFilter()">Reset</button>
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+              <h4 id="customizedTargetTitle" style="margin:0; color:#818cf8; font-size:13px;">Customized CDR for Target: </h4>
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <button class="btn btn-info" style="width:auto; padding:4px 10px; font-size:11px;" onclick="copyTableToClipboard('table-customized')">📋 Copy</button>
+                <button class="btn btn-success" style="width:auto; padding:4px 10px; font-size:11px;" onclick="downloadSectionExcel('Customized_CDR', 'table-customized')">📊 Excel</button>
+                <button class="btn btn-dark" style="width:auto; padding:4px 10px; font-size:11px;" onclick="downloadCustomizedWord()">📄 Word</button>
+              </div>
+            </div>
+            <div id="container-customized"></div>
+          </div>
+
+          <!-- SUB-SECTION 2: Profile & Analysis Hub View -->
+          <div id="subSection-profileHub" class="sub-section-view">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; flex-wrap:wrap; gap:8px;">
+              <h3 style="margin:0; color:#34d399; font-size:16px;">Profile & Analysis Hub</h3>
+              <div style="display:flex; gap:8px;">
+                <button class="btn btn-dark" style="width:auto; padding:4px 10px; font-size:11px;" onclick="downloadProfileReportWordHub()">📄 Save & Download Profile Word</button>
+                <button class="btn btn-secondary" style="width:auto; padding:4px 10px; font-size:11px;" onclick="closeSubSection()">← Back to Hub</button>
+              </div>
+            </div>
+
+            <!-- Target Selection Toggle for Profile Hub -->
+            <div style="background: #1f2937; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+              <label style="margin:0; font-size:11px; font-weight:800; color:#93c5fd;">Target Toggle:</label>
+              <select id="profileHubTargetDropdown" onchange="switchActiveTarget(this.value); renderMultiTables();" style="padding:4px 8px; font-weight:700; color:#ffffff; width:150px; background:#0b0f19; font-size:11px;"></select>
+            </div>
+
+            <div class="tabs-header-wrapper">
+              <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('bparty')">📞 Total B-Party</button>
+                <button class="tab-btn" onclick="switchTab('nightBparty')">🌙 Night B-Party</button>
+                <button class="tab-btn" onclick="switchTab('location')">📍 All Location</button>
+                <button class="tab-btn" onclick="switchTab('nightLocation')">🏙️ Night Location</button>
+                <button class="tab-btn" onclick="switchTab('imei')">📱 IMEI Lookup</button>
+                <button class="tab-btn" onclick="switchTab('common')">🔗 Common Analysis</button>
+              </div>
+
+              <div class="switch-container">
+                <span>Original Numbers (+88013-+88019)</span>
+                <label class="switch">
+                  <input type="checkbox" id="originalNumbersSwitch" onchange="handleOriginalSwitchChange()">
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Tab 2: Total B-Party -->
+            <div id="tab-bparty" class="tab-content active">
+              <div class="action-bar">
+                <div class="limit-selector">
+                  <span>Minimum Usage:</span>
+                  <select id="minUsage-bparty" onchange="renderMultiTables()" style="padding:4px; font-weight:700; background:#0b0f19; color:#ffffff; font-size:11px;">
+                    <option value="0" selected>All (0+)</option>
+                    <option value="2">Min 2</option>
+                    <option value="5">Min 5</option>
+                    <option value="10">Min 10</option>
+                  </select>
+                </div>
+                <input type="text" id="bpartySearchInput" placeholder="Search number..." oninput="renderMultiTables()" style="width: 130px; padding: 6px; font-size:11px;">
+                <div style="display:flex; gap:6px; align-items:center;">
+                  <button class="btn btn-info" style="width:auto; padding:4px 8px; font-size:11px;" onclick="copyTableToClipboard('table-bparty')">📋 Copy</button>
+                  <button class="btn btn-success" style="width:auto; padding:4px 8px; font-size:11px;" onclick="downloadSectionExcel('Total_BParty_Usage', 'table-bparty')">📊 Excel</button>
+                </div>
+              </div>
+              <div id="container-bparty"></div>
+            </div>
+
+            <!-- Tab 3: Night B-Party -->
+            <div id="tab-nightBparty" class="tab-content">
+              <div class="action-bar">
+                <div class="limit-selector">
+                  <span>Minimum Usage:</span>
+                  <select id="minUsage-nightBparty" onchange="renderMultiTables()" style="padding:4px; font-weight:700; background:#0b0f19; color:#ffffff; font-size:11px;">
+                    <option value="0" selected>All (0+)</option>
+                    <option value="2">Min 2</option>
+                    <option value="5">Min 5</option>
+                    <option value="10">Min 10</option>
+                  </select>
+                </div>
+                <div style="display:flex; gap:6px; align-items:center;">
+                  <button class="btn btn-info" style="width:auto; padding:4px 8px; font-size:11px;" onclick="copyTableToClipboard('table-nightBparty')">📋 Copy</button>
+                  <button class="btn btn-success" style="width:auto; padding:4px 8px; font-size:11px;" onclick="downloadSectionExcel('Night_BParty_Usage', 'table-nightBparty')">📊 Excel</button>
+                </div>
+              </div>
+              <div id="container-nightBparty"></div>
+            </div>
+
+            <!-- Tab 4: All Location -->
+            <div id="tab-location" class="tab-content">
+              <div class="action-bar">
+                <div class="limit-selector">
+                  <span>Show Top Serial:</span>
+                  <select id="limit-location" onchange="renderMultiTables()" style="padding:4px; font-weight:700; background:#0b0f19; color:#ffffff; font-size:11px;">
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+                    <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>
+                    <option value="9">9</option><option value="10" selected>10</option><option value="all">All</option>
+                  </select>
+                </div>
+                <div style="display:flex; gap:6px; align-items:center;">
+                  <button class="btn btn-info" style="width:auto; padding:4px 8px; font-size:11px;" onclick="copyTableToClipboard('table-location')">📋 Copy</button>
+                  <button class="btn btn-success" style="width:auto; padding:4px 8px; font-size:11px;" onclick="downloadSectionExcel('All_Location', 'table-location')">📊 Excel</button>
+                </div>
+              </div>
+              <div id="container-location"></div>
+            </div>
+
+            <!-- Tab 5: Night Location -->
+            <div id="tab-nightLocation" class="tab-content">
+              <div class="action-bar">
+                <div class="limit-selector">
+                  <span>Show Top Serial:</span>
+                  <select id="limit-nightLocation" onchange="renderMultiTables()" style="padding:4px; font-weight:700; background:#0b0f19; color:#ffffff; font-size:11px;">
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+                    <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>
+                    <option value="9">9</option><option value="10" selected>10</option><option value="all">All</option>
+                  </select>
+                </div>
+                <div style="display:flex; gap:6px; align-items:center;">
+                  <button class="btn btn-info" style="width:auto; padding:4px 8px; font-size:11px;" onclick="copyTableToClipboard('table-nightLocation')">📋 Copy</button>
+                  <button class="btn btn-success" style="width:auto; padding:4px 8px; font-size:11px;" onclick="downloadSectionExcel('Night_Location', 'table-nightLocation')">📊 Excel</button>
+                </div>
+              </div>
+              <div id="container-nightLocation"></div>
+            </div>
+
+            <!-- Tab 6: IMEI Lookup -->
+            <div id="tab-imei" class="tab-content">
+              <div class="action-bar">
+                <div class="limit-selector">
+                  <span>Show Top Serial:</span>
+                  <select id="limit-imei" onchange="renderMultiTables()" style="padding:4px; font-weight:700; background:#0b0f19; color:#ffffff; font-size:11px;">
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+                    <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>
+                    <option value="9">9</option><option value="10" selected>10</option><option value="all">All</option>
+                  </select>
+                </div>
+                <div style="display:flex; gap:6px; align-items:center;">
+                  <button class="btn btn-info" style="width:auto; padding:4px 8px; font-size:11px;" onclick="copyTableToClipboard('table-imei')">📋 Copy</button>
+                  <button class="btn btn-success" style="width:auto; padding:4px 8px; font-size:11px;" onclick="downloadSectionExcel('IMEI_Lookup', 'table-imei')">📊 Excel</button>
+                </div>
+              </div>
+              <div id="container-imei"></div>
+            </div>
+
+            <!-- Tab 7: Common Analysis -->
+            <div id="tab-common" class="tab-content">
+              <div style="background: #1f2937; padding: 15px; border-radius: 10px; border: 1.5px solid var(--border); margin-bottom: 15px;">
+                <label>SELECT ANALYSIS CATEGORY:</label>
+                <select id="commonCategorySelect" style="margin-bottom:10px; font-weight:700; color:#ffffff; background:#0b0f19; font-size:11px;">
+                  <option value="bparty">Total B-Party (Common B-Parties)</option>
+                  <option value="nightBparty">Night B-Party (12 AM - 8 AM)</option>
+                  <option value="location">All Location (Common Addresses/Sites)</option>
+                  <option value="nightLocation">Night Location (12 AM - 8 AM)</option>
+                  <option value="imei">IMEI Lookup (Common Devices)</option>
+                </select>
+
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                  <div class="switch-container" style="width: 100%; justify-content: space-between;">
+                    <span>Original Numbers Only (+88013-+88019)</span>
+                    <label class="switch">
+                      <input type="checkbox" id="commonOriginalNumbersOnly" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+                </div>
+
+                <label>INPUT TARGET NUMBERS / NAMES (COMMA SEPARATED):</label>
+                <input type="text" id="commonInputNumbers" placeholder="e.g. +8801711122233, Name1" style="margin-bottom:10px; font-size:11px;">
+                
+                <label>OR SELECT FROM AVAILABLE NUMBERS:</label>
+                <div id="commonCheckboxesContainer" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:5px;"></div>
+              </div>
+              <div style="display:flex; gap:8px; margin-bottom:12px; align-items:center; flex-wrap:wrap;">
+                <button class="btn btn-primary" style="margin:0; width:auto; padding:8px 16px; font-size:11px;" onclick="runCommonAnalysis()">⚡ Run Common Analysis</button>
+                <button class="btn btn-info" style="width:auto; padding:4px 10px; font-size:11px;" onclick="copyTableToClipboard('table-common')">📋 Copy</button>
+                <button class="btn btn-success" style="width:auto; padding:4px 10px; font-size:11px;" onclick="downloadSectionExcel('Common_Analysis', 'table-common')">📊 Excel</button>
+                <button class="btn btn-dark" style="width:auto; padding:4px 10px; font-size:11px;" onclick="downloadCommonWordLegal()">📄 Download Word</button>
+              </div>
+              <div id="container-common"></div>
+            </div>
+
+          </div>
+
+          <!-- SUB-SECTION 3: Tools Hub View (Number Sorter & All B-Party Extractor) -->
+          <div id="subSection-toolsHub" class="sub-section-view">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+              <h3 style="margin:0; color:#fbbf24; font-size:16px;">Number Sorter & All B-Party Extractor</h3>
+              <button class="btn btn-secondary" style="width:auto; padding:4px 10px; font-size:11px;" onclick="closeSubSection()">← Back to Hub</button>
+            </div>
+
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:15px; margin-bottom: 15px;">
+              <!-- All B-Party Extractor Box -->
+              <div style="background:#1f2937; border:1.5px solid var(--border); border-radius:10px; padding:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+                  <h5 style="margin:0; color:#818cf8; font-size:12px;">All B-Party (Comma Separated)</h5>
+                  <div style="display:flex; gap:6px; align-items:center;">
+                    <select id="allBpartyMinUsage" onchange="renderMultiTables()" style="padding:2px; font-weight:700; background:#0b0f19; color:#ffffff; font-size:10px;">
+                      <option value="1">Min 1</option><option value="2">Min 2</option><option value="3">Min 3</option><option value="4">Min 4</option>
+                      <option value="5">Min 5</option><option value="6">Min 6</option><option value="7">Min 7</option><option value="8">Min 8</option>
+                      <option value="9">Min 9</option><option value="10">Min 10</option><option value="11">Min 11</option><option value="12">Min 12</option>
+                    </select>
+                    <button class="btn btn-info" style="padding:2px 6px; font-size:10px; margin:0;" onclick="copyOutputText('outputAllBParties')">📋 Copy</button>
+                  </div>
+                </div>
+                <div style="margin-bottom:6px; display:flex; align-items:center; justify-content:space-between; font-size:10px; color:#93c5fd;">
+                  <span>Original Numbers Only (+88013-+88019)</span>
+                  <label class="switch"><input type="checkbox" id="allBpartyOriginalToggle" checked onchange="renderMultiTables()"><span class="slider"></span></label>
+                </div>
+                <textarea id="outputAllBParties" rows="5" readonly placeholder="Active target B-Party numbers will appear here..." style="font-family:monospace; font-size:11px; width:100%; background:#0b0f19; color:#ffffff;"></textarea>
+              </div>
+
+              <!-- IMEI Sorter Box -->
+              <div style="background:#1f2937; border:1.5px solid var(--border); border-radius:10px; padding:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <h5 style="margin:0; color:#818cf8; font-size:12px;">IMEI Sorter</h5>
+                  <button class="btn btn-info" style="padding:2px 6px; font-size:10px; margin:0;" onclick="copyOutputText('imeiSorterOutput')">📋 Copy</button>
+                </div>
+                <textarea id="imeiSorterInput" rows="2" placeholder="Paste IMEIs here..." style="font-family: monospace; font-size:11px; margin-bottom:6px;"></textarea>
+                <button class="btn btn-primary" style="margin:0 0 6px 0; padding:6px; font-size:11px;" onclick="processImeiSorting()">⚡ Format IMEIs</button>
+                <textarea id="imeiSorterOutput" rows="2" readonly placeholder="Formatted IMEI-MS output..." style="font-family: monospace; font-size:11px; width:100%; background:#0b0f19; color:#ffffff;"></textarea>
+              </div>
+            </div>
+
+            <!-- Advanced Number Sorter -->
+            <h4 style="margin:15px 0 10px 0; color:#818cf8; font-size:13px;">Advanced Operator Number Sorter:</h4>
+            <div style="background:#1f2937; padding:12px; border-radius:10px; border:1.5px solid var(--border); margin-bottom:15px;">
+              <label style="margin-bottom:6px;">PASTE OR DRAG NUMBERS HERE:</label>
+              <textarea id="sorterInputArea" rows="2" placeholder="Paste numbers here..." style="margin-bottom:8px; font-family: monospace; font-size:11px;"></textarea>
+              <button class="btn btn-primary" style="margin:0; width:auto; padding:8px 16px; font-size:11px;" onclick="processAdvancedNumberSorting()">⚡ Sort & Format Numbers</button>
+            </div>
+
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:15px;">
+              <div style="background:#111827; border:1.5px solid var(--border); border-radius:10px; padding:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <h5 style="margin:0; color:#818cf8; font-size:11px;">Grameenphone (GP)</h5>
+                  <select id="formatGP" onchange="processAdvancedNumberSorting()" style="width:80px; padding:2px; background:#0b0f19; color:#ffffff; font-size:10px;"><option value="LCL">LCL</option><option value="LRL">LRL</option><option value="MS-NID">MS-NID</option></select>
+                </div>
+                <textarea id="outputGP" rows="5" readonly style="font-family:monospace; font-size:11px; width:100%; background:#0b0f19; color:#ffffff;"></textarea>
+                <button class="btn btn-info" style="margin-top:6px; padding:4px 8px; font-size:10px; width:auto;" onclick="copyOutputText('outputGP')">Copy GP</button>
+              </div>
+
+              <div style="background:#111827; border:1.5px solid var(--border); border-radius:10px; padding:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <h5 style="margin:0; color:#818cf8; font-size:11px;">Robi & Airtel</h5>
+                  <select id="formatRobi" onchange="processAdvancedNumberSorting()" style="width:80px; padding:2px; background:#0b0f19; color:#ffffff; font-size:10px;"><option value="LCL">LCL</option><option value="LRL" selected>LRL</option><option value="MS-NID">MS-NID</option></select>
+                </div>
+                <textarea id="outputRobi" rows="5" readonly style="font-family:monospace; font-size:11px; width:100%; background:#0b0f19; color:#ffffff;"></textarea>
+                <button class="btn btn-info" style="margin-top:6px; padding:4px 8px; font-size:10px; width:auto;" onclick="copyOutputText('outputRobi')">Copy Robi</button>
+              </div>
+
+              <div style="background:#111827; border:1.5px solid var(--border); border-radius:10px; padding:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <h5 style="margin:0; color:#818cf8; font-size:11px;">Banglalink (Blink)</h5>
+                  <select id="formatBlink" onchange="processAdvancedNumberSorting()" style="width:80px; padding:2px; background:#0b0f19; color:#ffffff; font-size:10px;"><option value="LCL">LCL</option><option value="LRL">LRL</option><option value="MS-NID" selected>MS-NID</option></select>
+                </div>
+                <textarea id="outputBlink" rows="5" readonly style="font-family:monospace; font-size:11px; width:100%; background:#0b0f19; color:#ffffff;"></textarea>
+                <button class="btn btn-info" style="margin-top:6px; padding:4px 8px; font-size:10px; width:auto;" onclick="copyOutputText('outputBlink')">Copy Blink</button>
+              </div>
+
+              <div style="background:#111827; border:1.5px solid var(--border); border-radius:10px; padding:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <h5 style="margin:0; color:#818cf8; font-size:11px;">Teletalk (Ttalk)</h5>
+                  <select id="formatTtalk" onchange="processAdvancedNumberSorting()" style="width:80px; padding:2px; background:#0b0f19; color:#ffffff; font-size:10px;"><option value="LCL">LCL</option><option value="LRL">LRL</option><option value="MS-NID">MS-NID</option></select>
+                </div>
+                <textarea id="outputTtalk" rows="5" readonly style="font-family:monospace; font-size:11px; width:100%; background:#0b0f19; color:#ffffff;"></textarea>
+                <button class="btn btn-info" style="margin-top:6px; padding:4px 8px; font-size:10px; width:auto;" onclick="copyOutputText('outputTtalk')">Copy Ttalk</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- History Section -->
+          <div id="historySection" style="display:none; margin-top:20px; border-top:2px solid var(--primary); padding-top:15px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+              <h3 id="historyTitle" style="color:#818cf8; margin:0; font-size:14px;">Detailed Call History</h3>
+              <div style="display:flex; gap:6px;">
+                <button class="btn btn-info" style="width:auto; padding:4px 10px; font-size:11px;" onclick="copyTableToClipboard('table-history')">📋 Copy</button>
+                <button class="btn btn-success" style="width:auto; padding:4px 10px; font-size:11px;" onclick="downloadSectionExcel('History_CDR', 'table-history')">📊 Excel</button>
+                <button class="btn btn-dark" style="width:auto; padding:4px 10px; font-size:11px;" onclick="downloadHistoryWord()">📄 Word</button>
+                <button class="btn btn-danger" style="width:auto; padding:4px 10px; font-size:11px;" onclick="closeHistorySection()">✕ Close</button>
+              </div>
+            </div>
+            <div id="historyTableContainer" style="max-height:400px; overflow-y:auto;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. SMS Analyser Module Container -->
+      <div class="container-box" id="smsAnalyzerModuleContainer">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+          <button class="btn btn-secondary" style="width:auto; padding:6px 12px; font-size:12px;" onclick="openModule('home')">← Back to Modules</button>
+          <button class="btn btn-danger" style="width:auto; padding:6px 12px; font-size:12px;" onclick="openModule('home')">✕ Close Section</button>
+        </div>
+
+        <h1>SMS Analyser</h1>
+        <div class="subtitle">Multi-Operator SMS Log Parsing & Chronological Communication Analysis</div>
+        
+        <div class="control-panel" style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 15px; padding: 15px; background: #1f2937; border-radius: 12px; border: 1.5px solid var(--border); align-items: flex-start;">
+          <div>
+            <label for="smsOperator">Select Operator:</label>
+            <select id="smsOperator" style="padding:8px; border:1.5px solid var(--border); border-radius:8px; background:#0b0f19; color:#ffffff;">
+              <option value="banglalink">Banglalink</option>
+              <option value="robi">Robi</option>
+              <option value="gp">Grameenphone (GP)</option>
+              <option value="teletalk">Teletalk</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="smsFileInput">Upload SMS Files:</label>
+            <input type="file" id="smsFileInput" accept=".xlsx, .xls, .csv" multiple onchange="processSmsFiles(event)">
+          </div>
+
+          <div>
+            <label>Aparty select:</label>
+            <div id="aparty-checkbox-container" class="number-selector-box"><i style="color:#888;">Upload SMS data first...</i></div>
+          </div>
+
+          <div>
+            <label>Bparty select:</label>
+            <div id="bparty-checkbox-container" class="number-selector-box"><i style="color:#888;">Upload SMS data first...</i></div>
+          </div>
+
+          <div>
+            <label for="smsSearchBox">Keyword Search:</label>
+            <input type="text" id="smsSearchBox" placeholder="Search text..." onkeyup="renderSmsTable()" style="padding:8px; border:1.5px solid var(--border); border-radius:8px; width:150px; background:#0b0f19; color:#ffffff;">
+          </div>
+        </div>
+
+        <div class="paste-section">
+          <label for="paste-data"><b>Paste SMS Data Here:</b></label>
+          <textarea id="paste-data" rows="2" style="width:100%; margin-top:4px; font-family:monospace; background:#0b0f19; color:#ffffff;" placeholder="Paste data copied from Excel here..."></textarea>
+          <button onclick="processPastedData()" style="margin-top:8px; background:var(--primary); color:#fff; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:700; font-size:12px;">Process SMS Data</button>
+        </div>
+
+        <div style="display:flex; gap:8px; margin-bottom:12px; justify-content:flex-end; flex-wrap:wrap;">
+          <button class="btn btn-info" style="width:auto; padding:6px 12px; font-size:11px;" onclick="copyTableToClipboard('sms-table')">📋 Copy Table</button>
+          <button class="btn btn-success" style="width:auto; padding:6px 12px; font-size:11px;" onclick="downloadSectionExcel('SMS_Analysis_Report', 'sms-table')">📊 Download Excel</button>
+          <button class="btn btn-dark" style="width:auto; padding:6px 12px; font-size:11px;" onclick="window.print()">🖨️ Print Report</button>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table id="sms-table">
+            <thead>
+              <tr>
+                <th style="width:140px;">A-Party</th>
+                <th style="width:140px;">B-Party / Target Number</th>
+                <th>Message Body & Chronological Analysis</th>
+              </tr>
+            </thead>
+            <tbody id="smsTableBody">
+              <tr><td colspan="3" style="text-align:center;">No data loaded yet. Please upload file.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 5. MFS Statement Analyser Module Container -->
+      <div class="container-box" id="mfsAnalyzerModuleContainer">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+          <button class="btn btn-secondary" style="width:auto; padding:6px 12px; font-size:12px;" onclick="openModule('home')">← Back to Modules</button>
+          <button class="btn btn-danger" style="width:auto; padding:6px 12px; font-size:12px;" onclick="openModule('home')">✕ Close Section</button>
+        </div>
+
+        <h1>MFS Statement Analyser</h1>
+        <div class="subtitle">Multi-MFS Financial Statement Parsing & Transaction Analytics</div>
+
+        <div class="no-print space-y-4 mb-4">
+          <div style="background: #1f2937; border: 1px solid var(--border); padding: 12px; border-radius: 12px; display: flex; flex-direction: column; gap: 12px;">
+            <div style="width: 100%;">
+              <label style="display: block; font-size: 11px; font-weight: bold; color: #93c5fd; text-transform: uppercase; margin-bottom: 4px;">Active Account / Number:</label>
+              <select id="activeAccountToggle" onchange="switchActiveAccount()" style="width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 8px; background: #0b0f19; font-size: 12px; font-weight: 600; color: #ffffff;">
+                <option value="">-- No Account Loaded --</option>
+              </select>
+            </div>
+            <div style="display: flex; gap: 6px; width: 100%; justify-content: flex-end; flex-wrap: wrap; margin-top: 4px;">
+              <button onclick="openCommonAnalysisModal()" class="btn btn-primary" style="margin:0; width:auto; padding:6px 12px; font-size:11px;">Common Analysis</button>
+              <button onclick="window.print()" class="btn btn-dark" style="margin:0; width:auto; padding:6px 12px; font-size:11px;">Print Report</button>
+              <button onclick="exportAllProfiles()" class="btn btn-success" style="margin:0; width:auto; padding:6px 12px; font-size:11px;">Export JSON</button>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; background: #1f2937; padding: 12px; border-radius: 12px; border: 1.5px solid var(--border);">
+            <div>
+              <label style="display: block; font-size: 10px; font-weight: bold; color: #93c5fd; text-transform: uppercase; margin-bottom: 4px;">Select MFS Type:</label>
+              <select id="mfsSelect" style="width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 6px; background: #0b0f19; font-size: 12px; font-weight: 600; color: #ffffff;">
+                <option value="bKash">bKash</option>
+                <option value="Nagad">Nagad</option>
+                <option value="Rocket">Rocket</option>
+              </select>
+            </div>
+            <div>
+              <label style="display: block; font-size: 10px; font-weight: bold; color: #93c5fd; text-transform: uppercase; margin-bottom: 4px;">Add More Files:</label>
+              <input type="file" id="mfsFile" multiple accept=".xlsx, .xls, .csv" onchange="handleMfsFileUpload(event)" style="width: 100%;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 10px; font-weight: bold; color: #93c5fd; text-transform: uppercase; margin-bottom: 4px;">Txn Type Summary Toggle:</label>
+              <select id="summaryTypeToggle" onchange="updateTypeSummaryView()" style="width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 6px; background: #0b0f19; font-size: 12px; font-weight: 700; color: #38bdf8;">
+                <option value="ALL">-- Select Txn Type --</option>
+              </select>
+            </div>
+            <div>
+              <label style="display: block; font-size: 10px; font-weight: bold; color: #93c5fd; text-transform: uppercase; margin-bottom: 4px;">Number Search:</label>
+              <input type="text" id="searchNumber" oninput="applyMfsFilters()" placeholder="Search number..." style="width: 100%; padding: 6px; font-size: 12px;">
+            </div>
+          </div>
+        </div>
+
+        <div id="typeSummaryBox" class="mb-4 p-3 bg-blue-950 border border-blue-800 rounded-xl hidden">
+          <h3 class="text-xs font-bold text-blue-300 uppercase mb-1">Transaction Type Summary Analysis:</h3>
+          <div id="typeSummaryContent" class="text-xs text-slate-200 font-mono"></div>
+        </div>
+
+        <div style="margin-bottom: 15px; border: 1.5px solid var(--border); border-radius: 12px; overflow: hidden; background: #1f2937;">
+          <div style="background: #111827; color: #ffffff; font-size: 11px; text-transform: uppercase; padding: 10px 14px; font-weight: bold; letter-spacing: 0.5px;">Account Holder Profile & Details</div>
+          <div style="padding: 12px; background: #1f2937; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; align-items: center;">
+            <div>
+              <span style="display: block; font-size: 10px; font-weight: bold; color: #9ca3af; text-transform: uppercase;">Account Holder Number:</span>
+              <span id="lblAccNumber" style="font-size: 16px; font-weight: bold; color: #38bdf8;">N/A</span>
+              <div style="font-size: 11px; color: #9ca3af; margin-top: 2px;">MFS Provider: <span id="lblMfsProvider" style="font-weight: 600; color: #818cf8;">N/A</span></div>
+              <div style="font-size: 11px; font-weight: bold; margin-top: 2px;">Account Type: <span id="lblAccType" style="padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); font-size: 10px; background: #111827; color: #ffffff;">N/A</span></div>
+            </div>
+            <div>
+              <label style="display: block; font-size: 10px; font-weight: bold; color: #9ca3af; text-transform: uppercase; margin-bottom: 2px;">Name / Details:</label>
+              <textarea id="accHolderDetails" rows="2" onchange="saveAccountProfile()" style="width: 100%; padding: 6px; font-size: 11px; background: #0b0f19; margin-bottom: 4px;" placeholder="Enter Name, Location, Notes..."></textarea>
+              
+              <label style="display: block; font-size: 10px; font-weight: bold; color: #9ca3af; text-transform: uppercase; margin-bottom: 2px;">Total Transaction Summary:</label>
+              <div id="lblTotalTxnSummary" style="width: 100%; border: 1.5px solid var(--border); border-radius: 6px; padding: 6px; font-size: 10px; background: #0b0f19; font-family: monospace; color: #93c5fd; min-height: 40px; max-height: 80px; overflow-y: auto;">N/A</div>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; border-left: 1px solid var(--border); padding-left: 12px;">
+              <label style="display: block; font-size: 10px; font-weight: bold; color: #9ca3af; text-transform: uppercase; margin-bottom: 2px;">NID / Profile Pic:</label>
+              <div id="accHolderPicContainer" style="width: 80px; height: 80px; border: 2px dashed var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: #0b0f19; margin-bottom: 6px; overflow: hidden; position: relative;">
+                <span style="font-size: 9px; color: #9ca3af; text-align: center;">Paste / Upload</span>
+              </div>
+              <div class="no-print" style="display: flex; gap: 6px;">
+                <input type="file" accept="image/*" onchange="uploadProfilePic(event, 'acc')" style="display: none;" id="accPicInput">
+                <button onclick="document.getElementById('accPicInput').click()" class="btn btn-info" style="padding: 2px 6px; font-size: 9px; margin:0;">Upload</button>
+                <button onclick="downloadProfilePic('acc')" class="btn btn-success" style="padding: 2px 6px; font-size: 9px; margin:0; display:none;" id="accDownloadBtn">Download</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 15px; border: 1.5px solid var(--border); border-radius: 12px; overflow: hidden; background: #1f2937;">
+          <div style="background: #111827; color: #ffffff; font-size: 11px; text-transform: uppercase; padding: 10px 14px; font-weight: bold; letter-spacing: 0.5px;">Send From (Outgoing Transactions)</div>
+          <div style="overflow-x: auto;">
+            <table class="w-full text-left border-collapse" id="mfsSendTable">
+              <thead>
+                <tr style="background: #111827; border-bottom: 1px solid var(--border);">
+                  <th style="padding: 10px; border-right: 1px solid var(--border); width: 16%;">Send From</th>
+                  <th style="padding: 10px; border-right: 1px solid var(--border); width: 40%;">Receiver Number & Profile</th>
+                  <th style="padding: 10px; width: 44%;">Transaction Details & Date Time</th>
+                </tr>
+              </thead>
+              <tbody id="sendTableBody">
+                <tr><td colspan="3" style="padding: 12px; text-align: center; color: #9ca3af;">No outgoing data loaded.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 15px; border: 1.5px solid var(--border); border-radius: 12px; overflow: hidden; background: #1f2937;">
+          <div style="background: #111827; color: #ffffff; font-size: 11px; text-transform: uppercase; padding: 10px 14px; font-weight: bold; letter-spacing: 0.5px;">Received By (Incoming Transactions)</div>
+          <div style="overflow-x: auto;">
+            <table class="w-full text-left border-collapse" id="mfsReceiveTable">
+              <thead>
+                <tr style="background: #111827; border-bottom: 1px solid var(--border);">
+                  <th style="padding: 10px; border-right: 1px solid var(--border); width: 16%;">Received By</th>
+                  <th style="padding: 10px; border-right: 1px solid var(--border); width: 40%;">Sender Number & Profile</th>
+                  <th style="padding: 10px; width: 44%;">Transaction Details & Date Time</th>
+                </tr>
+              </thead>
+              <tbody id="receiveTableBody">
+                <tr><td colspan="3" style="padding: 12px; text-align: center; color: #9ca3af;">No incoming data loaded.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. User Manual & For Any Query Module Container -->
+      <div class="container-box" id="userManualModuleContainer">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+          <button class="btn btn-secondary" style="width:auto; padding:6px 12px; font-size:12px;" onclick="openModule('home')">← Back to Modules</button>
+          <button class="btn btn-danger" style="width:auto; padding:6px 12px; font-size:12px;" onclick="openModule('home')">✕ Close Section</button>
+        </div>
+
+        <h1>Master User Manual & Guide</h1>
+        <div class="subtitle">Complete Bilingual Operational Instructions & Developer Support Contact</div>
+
+        <div style="background:#1f2937; padding:25px; border-radius:16px; border:1.5px solid var(--border); text-align:left; line-height:1.7; color:#f3f4f6; box-shadow: var(--shadow);">
+          
+          <div style="background: linear-gradient(135deg, #4f46e5, #0ea5e9); color:white; padding:18px 20px; border-radius:12px; margin-bottom:25px; box-shadow: var(--shadow); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div style="font-size:16px; font-weight:800; letter-spacing:0.5px;">For Any Query/Advice</div>
+            <div style="font-size:14px; font-weight:700; background:rgba(255,255,255,0.2); padding:8px 14px; border-radius:8px; display:inline-flex; align-items:center; gap:8px;">
+              📱 Mobile / WhatsApp: +8801840304601
+            </div>
+          </div>
+
+          <!-- ENGLISH SECTION -->
+          <div style="border-bottom: 2px solid #374151; padding-bottom: 20px; margin-bottom: 20px;">
+            <h2 style="color:#818cf8; font-size:20px; font-weight:900; margin-bottom:12px;">USER MANUAL & OPERATIONAL GUIDE (ENGLISH)</h2>
+            
+            <h3 style="color:#ffffff; font-size:16px; margin-top:15px;">1. CDR Analyser Module & Mobile Hubs</h3>
+            <p style="font-size: 13px;"><b>Function Brief:</b> Features click-based mobile cards for <i>Customized CDR</i>, <i>Profile & Analysis Hub</i>, and <i>Number Sorter/Extractors</i>. Includes a **Cancel / Reset Current CDR** button to easily clear data and load a new CDR project.</p>
+
+            <h3 style="color:#ffffff; font-size:16px; margin-top:15px;">2. Profile Word Report Download</h3>
+            <p style="font-size: 13px;"><b>Function Brief:</b> In the Profile Hub, clicking <i>Save & Download Profile Word</i> generates a Word document containing exactly the filtered numbers, serial limits (Top 10, min usage), and records currently visible on screen.</p>
+          </div>
+
+          <!-- BENGALI SECTION -->
+          <div>
+            <h2 style="color:#34d399; font-size:20px; font-weight:900; margin-bottom:12px;">ইউজার ম্যানুয়াল ও কার্যপদ্ধতি নির্দেশিকা (বাংলা)</h2>
+            
+            <h3 style="color:#ffffff; font-size:16px; margin-top:15px;">১. মোবাইল ফ্রেন্ডলি কার্ড ও রিসেট অপশন</h3>
+            <p style="font-size: 13px;"><b>সংক্ষিপ্ত বিবরণ:</b> মোবাইল ব্যবহার সহজ করার জন্য এখন সবকিছু আলাদা কার্ডে ভাগ করা হয়েছে। এছাড়া নতুন CDR লোড করার আগে **Cancel / Reset Current CDR** বাটনে ক্লিক করে পুরোনো ডেটা সম্পূর্ণ ক্লিয়ার করে নেওয়া যাবে।</p>
+
+            <h3 style="color:#ffffff; font-size:16px; margin-top:15px;">২. প্রোফাইল ওয়ার্ড ফাইল ডাউনলোড</h3>
+            <p style="font-size: 13px;"><b>সংক্ষিপ্ত বিবরণ:</b> প্রোফাইল হাব থেকে ওয়ার্ড ফাইল ডাউনলোড করলে স্ক্রিনে যে কয়টি সিরিয়াল বা ফিল্টার সিলেক্ট করা থাকবে (যেমন: Top 10 Location বা Min Usage), হুবহু সেই পরিমাণ ডেটা নিয়েই ওয়ার্ড রিপোর্ট তৈরি হবে।</p>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Common Analysis Modal for MFS -->
+  <div id="commonModal" class="fixed inset-0 bg-black bg-opacity-70 hidden flex items-center justify-center p-4 z-50">
+    <div style="background: #1f2937; color: #f3f4f6; border: 1.5px solid var(--border);" class="rounded-2xl max-w-4xl w-full p-5 shadow-2xl max-h-[80vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-3 border-b border-slate-700 pb-2">
+        <h3 class="text-lg font-bold text-white">Cross-MFS Common Number Analysis</h3>
+        <button onclick="closeCommonAnalysisModal()" class="text-slate-400 hover:text-white font-bold text-lg">&times;</button>
+      </div>
+      <div id="commonModalContent" class="text-xs text-slate-200"></div>
+    </div>
+  </div>
+
+  <!-- ==================== JAVASCRIPT SCRIPT BLOCK ==================== -->
+  <script>
+    const firebaseConfigCompat = {
+      apiKey: "AIzaSyAizHTQHNa0fIkm47-OqFaVbyiDRTlNeoo",
+      authDomain: "krishhridanmitu-4567.firebaseapp.com",
+      projectId: "krishhridanmitu-4567",
+      storageBucket: "krishhridanmitu-4567.firebasestorage.app",
+      messagingSenderId: "1074393067397",
+      appId: "1:1074393067397:web:3bcde598e9aa25b4ff1eec",
+      measurementId: "G-5B3M84S7PL"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfigCompat);
+    }
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    let currentUserEmail = "";
+    let isAdminUser = false;
+    let currentSessionId = "";
+    let sessionListener = null;
+    const ADMIN_EMAIL = "krishhridanmitu@gmail.com";
+    let isSidebarVisible = true;
+    let currentlyFocusedBPartyBox = null;
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('leftSidebar');
+      const wrapper = document.getElementById('mainContentWrapper');
+      if (isSidebarVisible) {
+        sidebar.style.transform = 'translateX(-100%)';
+        wrapper.style.marginLeft = '0px';
+        isSidebarVisible = false;
+      } else {
+        sidebar.style.transform = 'translateX(0)';
+        wrapper.style.marginLeft = '260px';
+        isSidebarVisible = true;
+      }
+    }
+
+    function getOrCreateSessionId() {
+      let sId = localStorage.getItem("krishDeviceSessionId");
+      if (!sId) {
+        sId = 'sess_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+        localStorage.setItem("krishDeviceSessionId", sId);
+      }
+      return sId;
+    }
+
+    async function verifyCloudUserLogin() {
+      let email = document.getElementById('loginEmail').value.trim();
+      let pass = document.getElementById('loginPassword').value.trim();
+      let msgEl = document.getElementById('frontLoginMsg');
+
+      if (!email || !pass) {
+        msgEl.innerText = "Please enter email and password!";
+        return;
+      }
+
+      try {
+        let userCredential = await auth.signInWithEmailAndPassword(email, pass);
+        let user = userCredential.user;
+        currentUserEmail = user.email;
+
+        let userDoc = await db.collection("authorized_users").doc(user.email).get();
+
+        if (!userDoc.exists) {
+          msgEl.innerText = "Your account is not authorized by the Admin!";
+          await auth.signOut();
+          return;
+        }
+
+        let userData = userDoc.data();
+        if (userData.status !== "active") {
+          msgEl.innerText = "Access Denied: Your account has been blocked or disabled by Admin.";
+          await auth.signOut();
+          return;
+        }
+
+        currentSessionId = getOrCreateSessionId();
+        await db.collection("active_sessions").doc(user.email).set({
+          sessionId: currentSessionId,
+          loginTime: firebase.firestore.FieldValue.serverTimestamp(),
+          userAgent: navigator.userAgent
+        });
+
+        isAdminUser = (user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+
+        localStorage.setItem("isKrishCloudLoggedIn", "true");
+        localStorage.setItem("krishUserEmail", user.email);
+        
+        startSessionWatcher(user.email);
+        await loadCentralizedProfiles();
+
+        document.getElementById('frontLoginScreen').style.display = 'none';
+        document.getElementById('topHeaderBar').style.display = 'flex';
+        document.getElementById('appMainLayout').style.display = 'block';
+        document.getElementById('userInfoDisplay').innerHTML = `Connected: <strong class="text-blue-400">${user.email} (${isAdminUser ? 'Admin' : 'User'})</strong>`;
+
+        if (isAdminUser) {
+          document.getElementById('sidebarGlobalSearchContainer').style.display = 'block';
+        }
+
+      } catch (error) {
+        msgEl.innerText = "Login Failed: " + error.message;
+      }
+    }
+
+    function startSessionWatcher(email) {
+      if (sessionListener) sessionListener();
+      sessionListener = db.collection("active_sessions").doc(email).onSnapshot(doc => {
+        if (doc.exists) {
+          let data = doc.data();
+          if (data.sessionId && data.sessionId !== currentSessionId) {
+            alert("⚠️ Security Alert: Account logged in from another device. You are being logged out.");
+            performLogout();
+          }
+        }
+      });
+    }
+
+    async function performLogout() {
+      if (sessionListener) sessionListener();
+      try { await auth.signOut(); } catch(e) {}
+      localStorage.removeItem("isKrishCloudLoggedIn");
+      localStorage.removeItem("krishUserEmail");
+      localStorage.removeItem("krishDeviceSessionId");
+      location.reload();
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+      loadPersistentProfileDB();
+      if (localStorage.getItem("isKrishCloudLoggedIn") === "true") {
+        let savedEmail = localStorage.getItem("krishUserEmail");
+        if (savedEmail) {
+          currentUserEmail = savedEmail;
+          isAdminUser = (currentUserEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+          currentSessionId = getOrCreateSessionId();
+
+          db.collection("active_sessions").doc(currentUserEmail).get().then(async doc => {
+            if (doc.exists && doc.data().sessionId === currentSessionId) {
+              startSessionWatcher(currentUserEmail);
+              await loadCentralizedProfiles();
+              document.getElementById('frontLoginScreen').style.display = 'none';
+              document.getElementById('topHeaderBar').style.display = 'flex';
+              document.getElementById('appMainLayout').style.display = 'block';
+              document.getElementById('userInfoDisplay').innerHTML = `Connected: <strong class="text-blue-400">${currentUserEmail} (${isAdminUser ? 'Admin' : 'User'})</strong>`;
+              if (isAdminUser) {
+                document.getElementById('sidebarGlobalSearchContainer').style.display = 'block';
+              }
+            } else {
+              performLogout();
+            }
+          }).catch(() => performLogout());
+        }
+      }
+    });
+
+    function calculateLuhnCheckDigit(imei14) {
+      let sum = 0;
+      for (let i = 0; i < 14; i++) {
+        let d = parseInt(imei14.charAt(i), 10);
+        if (i % 2 === 1) {
+          d *= 2;
+          if (d > 9) d -= 9;
+        }
+        sum += d;
+      }
+      let mod = sum % 10;
+      return mod === 0 ? 0 : 10 - mod;
+    }
+
+    function correctImeiNumber(rawImei) {
+      let clean = String(rawImei || "").replace(/\D/g, "");
+      if (clean.length === 14) {
+        return clean + calculateLuhnCheckDigit(clean);
+      } else if (clean.length >= 15) {
+        let base14 = clean.slice(0, 14);
+        return base14 + calculateLuhnCheckDigit(base14);
+      }
+      return clean;
+    }
+
+    function lookupSidebarIMEI() {
+      let rawImei = document.getElementById('sidebar-imei-input').value.trim();
+      let fixedImei = correctImeiNumber(rawImei);
+      if (fixedImei.length < 14) {
+        alert('Please enter a valid 14-15 digit IMEI number.');
+        return;
+      }
+      window.open(`https://www.imei.info/?imei=${fixedImei}`, '_blank');
+    }
+
+    function openModule(mod) {
+      document.getElementById('landingPageContainer').style.display = 'none';
+      document.getElementById('mainDashboardContainer').style.display = 'none';
+      document.getElementById('smsAnalyzerModuleContainer').style.display = 'none';
+      document.getElementById('mfsAnalyzerModuleContainer').style.display = 'none';
+      document.getElementById('userManualModuleContainer').style.display = 'none';
+
+      if (mod === 'home') {
+        document.getElementById('landingPageContainer').style.display = 'block';
+      } else if (mod === 'cdr') {
+        document.getElementById('mainDashboardContainer').style.display = 'block';
+      } else if (mod === 'sms') {
+        document.getElementById('smsAnalyzerModuleContainer').style.display = 'block';
+      } else if (mod === 'mfs') {
+        document.getElementById('mfsAnalyzerModuleContainer').style.display = 'block';
+      } else if (mod === 'guide') {
+        document.getElementById('userManualModuleContainer').style.display = 'block';
+      }
+    }
+
+    function openSubSection(sectionKey) {
+      document.getElementById('mainHubMenu').style.display = 'none';
+      document.getElementById('subSection-customized').classList.remove('active');
+      document.getElementById('subSection-profileHub').classList.remove('active');
+      document.getElementById('subSection-toolsHub').classList.remove('active');
+
+      if (sectionKey === 'customized') {
+        document.getElementById('subSection-customized').classList.add('active');
+      } else if (sectionKey === 'profileHub') {
+        document.getElementById('subSection-profileHub').classList.add('active');
+      } else if (sectionKey === 'toolsHub') {
+        document.getElementById('subSection-toolsHub').classList.add('active');
+      }
+    }
+
+    function closeSubSection() {
+      document.getElementById('subSection-customized').classList.remove('active');
+      document.getElementById('subSection-profileHub').classList.remove('active');
+      document.getElementById('subSection-toolsHub').classList.remove('active');
+      document.getElementById('mainHubMenu').style.display = 'grid';
+    }
+
+    function cancelAndResetCurrentCDR() {
+      if (confirm("Are you sure you want to cancel and reset current CDR data? All loaded logs will be cleared.")) {
+        cleanedMultiCDR = [];
+        detectedTargets = [];
+        activeTargetNumber = "";
+        globalMappingConfig = null;
+        workbookQueue = [];
+        currentWbIndex = 0;
+        document.getElementById('fileInput').value = "";
+        document.getElementById('wordProfileImportInput').value = "";
+        document.getElementById('pasteProfileInput').value = "";
+        document.getElementById('dashboard').style.display = 'none';
+        document.getElementById('mappingPanel').style.display = 'none';
+        document.getElementById('uploadSection').style.display = 'block';
+      }
+    }
+
+    function handleTargetedGlobalCtrlV(e) {
+      const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+      if (!items) return;
+      for (let i in items) {
+        if (items[i].kind === 'file' && items[i].type.startsWith('image/')) {
+          let blob = items[i].getAsFile();
+          let reader = new FileReader();
+          reader.onload = ev => {
+            if (currentlyFocusedBPartyBox) {
+              let bNum = currentlyFocusedBPartyBox;
+              if (!globalProfileDB[activeTargetNumber]) globalProfileDB[activeTargetNumber] = {};
+              if (!globalProfileDB[activeTargetNumber].BPartyProfiles) globalProfileDB[activeTargetNumber].BPartyProfiles = {};
+              if (!globalProfileDB[activeTargetNumber].BPartyProfiles[bNum]) globalProfileDB[activeTargetNumber].BPartyProfiles[bNum] = { details: "", pic: "" };
+              globalProfileDB[activeTargetNumber].BPartyProfiles[bNum].pic = ev.target.result;
+              savePersistentProfileDB();
+              renderMultiTables();
+              alert("Image pasted successfully to selected B-Party profile!");
+            } else if (activeTargetNumber) {
+              if (!globalProfileDB[activeTargetNumber]) globalProfileDB[activeTargetNumber] = {};
+              globalProfileDB[activeTargetNumber].Image = ev.target.result;
+              savePersistentProfileDB();
+              renderActiveTargetProfile();
+              alert("Target Photo pasted successfully!");
+            }
+          };
+          reader.readAsDataURL(blob);
+          e.preventDefault();
+          break;
+        }
+      }
+    }
+
+    let globalProfileDB = {};
+    let centralAllProfilesDB = {};
+
+    function loadPersistentProfileDB() {
+      try {
+        let saved = localStorage.getItem("krishGlobalProfileDB");
+        if (saved) globalProfileDB = JSON.parse(saved);
+      } catch(e) { globalProfileDB = {}; }
+    }
+
+    function savePersistentProfileDB() {
+      try {
+        let imeiInputs = document.querySelectorAll('#container-imei input[type="text"]');
+        if (imeiInputs.length > 0) {
+          if (!globalProfileDB[activeTargetNumber]) globalProfileDB[activeTargetNumber] = {};
+          if (!globalProfileDB[activeTargetNumber].ImeiModels) globalProfileDB[activeTargetNumber].ImeiModels = {};
+          
+          imeiInputs.forEach(inp => {
+            let row = inp.closest('tr');
+            if (row) {
+              let imeiText = row.querySelector('b').innerText.trim();
+              globalProfileDB[activeTargetNumber].ImeiModels[imeiText] = inp.value.trim();
+            }
+          });
+        }
+
+        localStorage.setItem("krishGlobalProfileDB", JSON.stringify(globalProfileDB));
+        if (activeTargetNumber) {
+          let prof = globalProfileDB[activeTargetNumber] || {};
+          prof.SubmittedBy = currentUserEmail;
+          db.collection("shared_profiles").doc(activeTargetNumber).set({
+            targetNumber: activeTargetNumber,
+            name: prof.Name || "",
+            connectedWith: prof.ConnectedWith || "",
+            image: prof.Image || "",
+            nidImage: prof.NidImage || "",
+            bpartyProfiles: prof.BPartyProfiles || {},
+            imeiModels: prof.ImeiModels || {},
+            submittedBy: currentUserEmail,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true }).catch(err => console.log("Sync error:", err));
+        }
+      } catch(e) {}
+    }
+
+    function exportFullMemoryBackup() {
+      let backupData = {
+        globalProfileDB: globalProfileDB,
+        mfsAccountProfiles: mfsAccountProfiles,
+        version: "3.1",
+        exportDate: new Date().toISOString()
+      };
+      let blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+      let url = URL.createObjectURL(blob);
+      let a = document.createElement('a');
+      a.href = url;
+      a.download = `ForensicSuite_Memory_Backup_${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      alert("Full memory backup exported successfully!");
+    }
+
+    function importFullMemoryBackup(event) {
+      let file = event.target.files[0];
+      if (!file) return;
+      let reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          let parsed = JSON.parse(e.target.result);
+          if (parsed.globalProfileDB) {
+            globalProfileDB = parsed.globalProfileDB;
+            localStorage.setItem("krishGlobalProfileDB", JSON.stringify(globalProfileDB));
+          }
+          if (parsed.mfsAccountProfiles) {
+            mfsAccountProfiles = parsed.mfsAccountProfiles;
+            localStorage.setItem('krish_mfs_profiles', JSON.stringify(mfsAccountProfiles));
+          }
+          alert("Memory backup restored successfully!");
+          location.reload();
+        } catch(err) {
+          alert("Error restoring backup file: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    async function loadCentralizedProfiles() {
+      try {
+        let snapshot = await db.collection("shared_profiles").get();
+        centralAllProfilesDB = {};
+        snapshot.forEach(doc => {
+          let data = doc.data();
+          centralAllProfilesDB[data.targetNumber] = data;
+        });
+      } catch(e) {
+        console.log("Error loading central profiles:", e);
+      }
+    }
+
+    function importWordProfile(event) {
+      let file = event.target.files[0];
+      if (!file) return;
+      let reader = new FileReader();
+      reader.onload = function(e) {
+        parseAndApplyProfileText(e.target.result);
+      };
+      reader.readAsText(file);
+    }
+
+    function processPastedProfileData() {
+      let text = document.getElementById('pasteProfileInput').value.trim();
+      if (!text) { alert("Please paste profile data first!"); return; }
+      parseAndApplyProfileText(text);
+      document.getElementById('pasteProfileInput').value = "";
+    }
+
+    function parseAndApplyProfileText(text) {
+      let parser = new DOMParser();
+      let doc = parser.parseFromString(text, 'text/html');
+      let tables = doc.querySelectorAll('table');
+      
+      let extractedNumber = "", extractedName = "", extractedConnected = "";
+
+      if (tables.length > 0) {
+        let targetRows = tables[0].querySelectorAll('tr');
+        targetRows.forEach(tr => {
+          let tds = tr.querySelectorAll('td');
+          if (tds.length >= 2) {
+            let label = tds[0].innerText.trim().toLowerCase();
+            let val = tds[1].innerText.trim();
+            if (label.includes('target') || label.includes('number/id')) {
+              let match = val.match(/(\+880\d{10}|01\d{9})/);
+              if (match) extractedNumber = match[1];
+            } else if (label.includes('name') || label.includes('nid')) {
+              extractedName = val;
+            } else if (label.includes('previously connected')) {
+              extractedConnected = val;
+            }
+          }
+        });
+      }
+
+      if (!extractedNumber) {
+        let match = text.match(/(\+880\d{10}|01\d{9})/);
+        if (match) extractedNumber = formatBPartyNumber(match[1]);
+      }
+
+      if (extractedNumber) {
+        if (!globalProfileDB[extractedNumber]) globalProfileDB[extractedNumber] = {};
+        if (extractedName && extractedName !== '') globalProfileDB[extractedNumber].Name = extractedName;
+        if (extractedConnected && extractedConnected !== '') globalProfileDB[extractedNumber].ConnectedWith = extractedConnected;
+        globalProfileDB[extractedNumber].SubmittedBy = currentUserEmail;
+        savePersistentProfileDB();
+        
+        if (!detectedTargets.includes(extractedNumber)) {
+          detectedTargets.push(extractedNumber);
+        }
+        activeTargetNumber = extractedNumber;
+
+        updateAllTargetDropdowns();
+        renderActiveTargetProfile();
+        renderCommonCheckboxes();
+        alert(`Successfully auto-matched and updated profile for target: ${extractedNumber}`);
+      } else {
+        alert("Could not detect target number from the pasted/imported data.");
+      }
+    }
+
+    let workbookQueue = [];
+    let currentWbIndex = 0;
+    let cleanedMultiCDR = [], detectedTargets = [], activeTargetNumber = "";
+    let globalMappingConfig = null;
+
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+      cleanedMultiCDR = [];
+      detectedTargets = [];
+      activeTargetNumber = "";
+      globalMappingConfig = null;
+      handleMultipleWorkbookUpload(e, false);
+    });
+
+    function triggerAddMoreFiles() {
+      document.getElementById('addMoreFileInput').click();
+    }
+
+    function appendMoreCDRFiles(e) {
+      handleMultipleWorkbookUpload(e, true);
+    }
+
+    function handleMultipleWorkbookUpload(e, isAppend) {
+      let files = Array.from(e.target.files);
+      if (!files.length) return;
+
+      workbookQueue = [];
+      let loadedFilesCount = 0;
+      files.forEach(file => {
+        let reader = new FileReader();
+        reader.onload = function(evt) {
+          try {
+            let wb = XLSX.read(new Uint8Array(evt.target.result), { type: 'array' });
+            wb.SheetNames.forEach(sheetName => {
+              let rawRows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { defval: "" });
+              if (rawRows.length > 0) {
+                workbookQueue.push({ fileName: file.name, sheetName: sheetName, rows: rawRows });
+              }
+            });
+          } catch (err) {
+            console.error("Error reading file " + file.name + ": " + err.message);
+          }
+
+          loadedFilesCount++;
+          if (loadedFilesCount === files.length) {
+            currentWbIndex = 0;
+            processNextQueueItem();
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    function processNextQueueItem() {
+      if (currentWbIndex >= workbookQueue.length) {
+        finalizeDashboardLoad();
+        return;
+      }
+
+      let item = workbookQueue[currentWbIndex];
+      let rawRows = item.rows;
+      let headers = Object.keys(rawRows[0] || {});
+
+      if (globalMappingConfig && currentWbIndex > 0) {
+        processRowsWithConfig(rawRows, globalMappingConfig);
+        currentWbIndex++;
+        processNextQueueItem();
+        return;
+      }
+
+      ['colDate', 'colTime', 'colA', 'colB', 'colDuration', 'colImei', 'colType', 'colDirection', 'colAddress', 'colLac', 'colCell'].forEach(id => {
+        let sel = document.getElementById(id);
+        sel.innerHTML = '<option value="">-- None --</option>';
+        headers.forEach(h => { sel.innerHTML += `<option value="${h}">${h}</option>`; });
+      });
+
+      document.getElementById('mappingPanelTitle').innerText = `Column Mapping [File: ${item.fileName} | Sheet: ${item.sheetName}] (${currentWbIndex + 1} of ${workbookQueue.length})`;
+      window.tempRawRowsForMapping = rawRows;
+      document.getElementById('selectOperatorPreset').value = "Custom";
+      document.getElementById('mappingPanel').style.display = "block";
+      document.getElementById('uploadSection').style.display = "none";
+      document.getElementById('dashboard').style.display = "none";
+    }
+
+    function applyOperatorPreset(op) {
+      if (op === "Custom") return;
+      let headers = Array.from(document.getElementById('colDate').options).map(o => o.value).filter(Boolean);
+      function findBestHeader(keywords) {
+        for (let kw of keywords) {
+          let match = headers.find(h => h.toLowerCase().includes(kw));
+          if (match) return match;
+        }
+        return "";
+      }
+      if (op === "Banglalink") {
+        setDropdownVal('colDate', findBestHeader(['start', 'date', 'time']));
+        setDropdownVal('colA', findBestHeader(['aparty', 'subno', 'msisdn']));
+        setDropdownVal('colB', findBestHeader(['bparty', 'called']));
+        setDropdownVal('colDuration', findBestHeader(['duration', 'callduration']));
+        setDropdownVal('colImei', findBestHeader(['imei']));
+        setDropdownVal('colType', findBestHeader(['usagetype', 'type']));
+        setDropdownVal('colDirection', findBestHeader(['networktype', 'direction']));
+        setDropdownVal('colAddress', findBestHeader(['address', 'loc']));
+        setDropdownVal('colLac', findBestHeader(['lac']));
+        setDropdownVal('colCell', findBestHeader(['cell', 'cis']));
+      } else if (op === "Grameenphone") {
+        setDropdownVal('colDate', findBestHeader(['starttime', 'date']));
+        setDropdownVal('colA', findBestHeader(['aparty', 'subno']));
+        setDropdownVal('colB', findBestHeader(['bparty', 'called']));
+        setDropdownVal('colDuration', findBestHeader(['duration']));
+        setDropdownVal('colImei', findBestHeader(['imei']));
+        setDropdownVal('colType', findBestHeader(['type']));
+        setDropdownVal('colDirection', findBestHeader(['direction']));
+        setDropdownVal('colAddress', findBestHeader(['address']));
+        setDropdownVal('colLac', findBestHeader(['lac']));
+        setDropdownVal('colCell', findBestHeader(['cellid', 'cell']));
+      } else if (op === "Robi") {
+        setDropdownVal('colDate', findBestHeader(['callstart', 'date', 'start']));
+        setDropdownVal('colA', findBestHeader(['calling', 'aparty', 'subno']));
+        setDropdownVal('colB', findBestHeader(['called', 'bparty']));
+        setDropdownVal('colDuration', findBestHeader(['duration']));
+        setDropdownVal('colImei', findBestHeader(['imei']));
+        setDropdownVal('colType', findBestHeader(['type']));
+        setDropdownVal('colDirection', findBestHeader(['direction']));
+        setDropdownVal('colAddress', findBestHeader(['address']));
+        setDropdownVal('colLac', findBestHeader(['lac']));
+        setDropdownVal('colCell', findBestHeader(['cell']));
+      } else if (op === "Teletalk") {
+        setDropdownVal('colDate', findBestHeader(['timestamp', 'date', 'start']));
+        setDropdownVal('colA', findBestHeader(['orgaddr', 'aparty']));
+        setDropdownVal('colB', findBestHeader(['destaddr', 'bparty']));
+        setDropdownVal('colDuration', findBestHeader(['duration']));
+        setDropdownVal('colImei', findBestHeader(['imei']));
+        setDropdownVal('colAddress', findBestHeader(['address']));
+        setDropdownVal('colLac', findBestHeader(['lac']));
+        setDropdownVal('colCell', findBestHeader(['cell']));
+      }
+    }
+
+    function setDropdownVal(elementId, val) {
+      let sel = document.getElementById(elementId);
+      for (let opt of sel.options) {
+        if (opt.value.toLowerCase() === val.toLowerCase() || (val === '-- None --' && opt.value === '')) {
+          sel.value = opt.value;
+          return;
+        }
+      }
+      if (val === '-- None --') sel.value = "";
+    }
+
+    function formatBPartyNumber(val) {
+      if (!val) return "";
+      let str = String(val).trim();
+      if (/[a-zA-Z\u0980-\u09FF]/.test(str)) return str;
+      let digits = str.replace(/\D/g, "");
+      return digits.length >= 10 ? "+880" + digits.slice(-10) : str;
+    }
+
+    function parseDateTime(dateVal, timeVal) {
+      let strD = String(dateVal || "").trim();
+      let strT = String(timeVal || "").trim();
+      let hour = 0, dateFormatted = strD, timeFormatted = strT || "00:00:00";
+
+      if (/^\d{14}$/.test(strD)) {
+        let y = strD.slice(0, 4), m = strD.slice(4, 6), d = strD.slice(6, 8);
+        hour = parseInt(strD.slice(8, 10), 10) || 0;
+        let min = strD.slice(10, 12), sec = strD.slice(12, 14);
+        dateFormatted = `${y}-${m}-${d}`;
+        timeFormatted = `${String(hour).padStart(2,'0')}:${min}:${sec}`;
+        return { date: dateFormatted, hour: hour, time: timeFormatted, fullStr: `${dateFormatted} ${timeFormatted}` };
+      }
+
+      if (strD.includes('/') && strD.includes(' ')) {
+        let parts = strD.split(' ');
+        let dParts = parts[0].split('/');
+        if (dParts.length === 3) {
+          let day = dParts[0].padStart(2, '0');
+          let mon = dParts[1].padStart(2, '0');
+          let yr = dParts[2];
+          dateFormatted = `${yr}-${mon}-${day}`;
+        }
+        let tPart = parts[1];
+        if (tPart.includes(':')) {
+          let tParts = tPart.split(':');
+          hour = parseInt(tParts[0], 10) || 0;
+          timeFormatted = `${tParts[0].padStart(2,'0')}:${(tParts[1]||'00').padStart(2,'0')}:${(tParts[2]||'00').padStart(2,'0')}`;
+        }
+        return { date: dateFormatted, hour: hour, time: timeFormatted, fullStr: `${dateFormatted} ${timeFormatted}` };
+      }
+
+      if (strT && strT.includes(':')) {
+        let parts = strT.split(':');
+        hour = parseInt(parts[0], 10) || 0;
+        timeFormatted = `${parts[0].padStart(2,'0')}:${(parts[1]||'00').padStart(2,'0')}:${(parts[2]||'00').padStart(2,'0')}`;
+      } else if (strD.includes(' ')) {
+        let parts = strD.split(' ');
+        dateFormatted = parts[0];
+        let timePart = parts[1];
+        if (timePart && timePart.includes(':')) {
+          let tParts = timePart.split(':');
+          hour = parseInt(tParts[0], 10) || 0;
+          timeFormatted = `${tParts[0].padStart(2,'0')}:${(tParts[1]||'00').padStart(2,'0')}:${(tParts[2]||'00').padStart(2,'0')}`;
+        }
+      }
+      return { date: dateFormatted, hour: hour, time: timeFormatted, fullStr: `${dateFormatted} ${timeFormatted}` };
+    }
+
+    function isOriginalNumberFilter(num) {
+      let sw = document.getElementById('originalNumbersSwitch');
+      if (!sw || !sw.checked) return true;
+      let clean = String(num).replace(/\D/g, "");
+      if (clean.startsWith("880")) clean = clean.slice(3);
+      if (clean.startsWith("0")) clean = clean.slice(1);
+      return /^1[3-9]\d{8}$/.test(clean);
+    }
+
+    function confirmMappingAndProcess() {
+      globalMappingConfig = {
+        cDate: document.getElementById('colDate').value,
+        cTime: document.getElementById('colTime').value,
+        cA: document.getElementById('colA').value,
+        cB: document.getElementById('colB').value,
+        cDur: document.getElementById('colDuration').value,
+        cImei: document.getElementById('colImei').value,
+        cType: document.getElementById('colType').value,
+        cDir: document.getElementById('colDirection').value,
+        cAddr: document.getElementById('colAddress').value,
+        cLac: document.getElementById('colLac').value,
+        cCell: document.getElementById('colCell').value
+      };
+
+      if (!globalMappingConfig.cDate || !globalMappingConfig.cA || !globalMappingConfig.cB) {
+        alert("Please map at least Date, A-Party, and B-Party columns!");
+        return;
+      }
+
+      let rawRows = window.tempRawRowsForMapping || [];
+      processRowsWithConfig(rawRows, globalMappingConfig);
+      currentWbIndex++;
+      processNextQueueItem();
+    }
+
+    function processRowsWithConfig(rawRows, cfg) {
+      let parsedRows = [];
+      rawRows.forEach(r => {
+        let rawD = r[cfg.cDate] || "";
+        let rawT = cfg.cTime ? r[cfg.cTime] : "";
+        let dtObj = parseDateTime(rawD, rawT);
+
+        let rawImei = cfg.cImei ? r[cfg.cImei] : "";
+        let correctedImei = correctImeiNumber(rawImei);
+
+        parsedRows.push({
+          Date: dtObj.date, Hour: dtObj.hour, Time: dtObj.time,
+          A_Party: formatBPartyNumber(r[cfg.cA]), B_Party: formatBPartyNumber(r[cfg.cB]),
+          Duration: parseFloat(r[cfg.cDur]) || 0, IMEI: correctedImei,
+          UsageType: cfg.cType ? r[cfg.cType] : "Voice", NetworkType: cfg.cDir ? r[cfg.cDir] : "4G",
+          Address: cfg.cAddr ? r[cfg.cAddr] : "", LAC: cfg.cLac ? r[cfg.cLac] : "", Cell: cfg.cCell ? r[cfg.cCell] : "",
+          SubmittedBy: currentUserEmail
+        });
+      });
+      cleanedMultiCDR = cleanedMultiCDR.concat(parsedRows);
+    }
+
+    async function finalizeDashboardLoad() {
+      await loadCentralizedProfiles();
+      let cdrTargets = Array.from(new Set(cleanedMultiCDR.map(r => r.A_Party).filter(Boolean)));
+      cdrTargets.forEach(t => {
+        if (!detectedTargets.includes(t)) detectedTargets.push(t);
+      });
+      
+      detectedTargets.forEach(target => {
+        if(!globalProfileDB[target]) {
+          let centralMatch = centralAllProfilesDB[target];
+          if (centralMatch && isAdminUser) {
+            globalProfileDB[target] = { 
+              Name: centralMatch.name || "", 
+              ConnectedWith: `Previously connected with: ${centralMatch.connectedWith || ''} (Found from User: ${centralMatch.submittedBy || 'Unknown'})`, 
+              Image: centralMatch.image || "", 
+              NidImage: centralMatch.nidImage || "", 
+              BPartyProfiles: centralMatch.bpartyProfiles || {},
+              ImeiModels: centralMatch.imeiModels || {},
+              SubmittedBy: centralMatch.submittedBy || currentUserEmail 
+            };
+          } else {
+            globalProfileDB[target] = { Name: "", ConnectedWith: "", Image: "", NidImage: "", BPartyProfiles: {}, ImeiModels: {}, SubmittedBy: currentUserEmail };
+          }
+        }
+      });
+      savePersistentProfileDB();
+
+      if (detectedTargets.length > 0 && !detectedTargets.includes(activeTargetNumber)) {
+        activeTargetNumber = detectedTargets[0];
+      }
+      
+      updateAllTargetDropdowns();
+
+      renderActiveTargetProfile();
+      renderCommonCheckboxes();
+      renderMultiTables();
+      renderCustomizedTable(cleanedMultiCDR.filter(r => r.A_Party === activeTargetNumber));
+
+      document.getElementById('mappingPanel').style.display = "none";
+      document.getElementById('uploadSection').style.display = "none";
+      document.getElementById('dashboard').style.display = "block";
+    }
+
+    function updateAllTargetDropdowns() {
+      ['activeTargetDropdown', 'customizedTargetDropdown', 'profileHubTargetDropdown'].forEach(id => {
+        let dropdown = document.getElementById(id);
+        if (dropdown) {
+          dropdown.innerHTML = "";
+          detectedTargets.forEach(num => { dropdown.innerHTML += `<option value="${num}">${num}</option>`; });
+          if(activeTargetNumber) dropdown.value = activeTargetNumber;
+        }
+      });
+    }
+
+    function switchActiveTarget(num) { 
+      activeTargetNumber = num; 
+      updateAllTargetDropdowns();
+      renderActiveTargetProfile(); 
+      renderMultiTables(); 
+      renderCustomizedTable(cleanedMultiCDR.filter(r => r.A_Party === activeTargetNumber));
+    }
+
+    function renderActiveTargetProfile() {
+      let container = document.getElementById('targetProfilesContainer');
+      if(!globalProfileDB[activeTargetNumber]) globalProfileDB[activeTargetNumber] = { Name: "", ConnectedWith: "", Image: "", NidImage: "", BPartyProfiles: {}, ImeiModels: {}, SubmittedBy: currentUserEmail };
+      let prof = globalProfileDB[activeTargetNumber];
+      let targetRows = cleanedMultiCDR.filter(r => r.A_Party === activeTargetNumber);
+      
+      let dateRangeStr = "";
+      if (targetRows.length > 0) {
+        let dates = targetRows.map(r => r.Date).filter(Boolean).sort();
+        if (dates.length > 0) {
+          let firstDate = formatDateToDDMMYYYY(dates[0]);
+          let lastDate = formatDateToDDMMYYYY(dates[dates.length - 1]);
+          dateRangeStr = ` (${firstDate} - ${lastDate})`;
+        }
+      }
+
+      let submittedByStr = isAdminUser ? `<div style="font-size:10px; color:#9ca3af; margin-top:2px;"><b>Submitted by:</b> ${prof.SubmittedBy || currentUserEmail}</div>` : '';
+
+      container.innerHTML = `
+        <div class="profile-card active-profile" style="background:#1f2937; border:2px solid var(--border); padding:12px; margin-bottom:12px;">
+          <div style="font-weight:700; color:#818cf8; margin-bottom:8px; font-size:12px;">Active Target / ID: ${activeTargetNumber}${dateRangeStr} ${submittedByStr}</div>
+          <div class="profile-grid">
+            <div style="text-align:center;">
+              <label>Target Photo</label>
+              <div class="resizable-img-box" onclick="triggerTargetImageUpload('${activeTargetNumber}', 'Image')" style="width:80px; height:90px; margin:0 auto;" title="Click or Paste image">
+                <img src="${prof.Image || ''}" style="${prof.Image ? '' : 'display:none;'} width:100%; height:100%; object-fit:cover;">
+                <span style="${prof.Image ? 'display:none;' : ''} font-size:9px; color:#9ca3af;">Target Pic</span>
+              </div>
+            </div>
+            <div style="text-align:center;">
+              <label>NID Image</label>
+              <div class="resizable-img-box" onclick="triggerTargetImageUpload('${activeTargetNumber}', 'NidImage')" style="width:80px; height:90px; margin:0 auto;" title="Click or Paste NID">
+                <img src="${prof.NidImage || ''}" style="${prof.NidImage ? '' : 'display:none;'} width:100%; height:100%; object-fit:cover;">
+                <span style="${prof.NidImage ? 'display:none;' : ''} font-size:9px; color:#9ca3af;">NID Pic</span>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <label>1. NAME / NID:</label>
+              <input type="text" id="profName" value="${prof.Name || ''}" placeholder="Subscriber Name" oninput="globalProfileDB['${activeTargetNumber}'].Name=this.value; savePersistentProfileDB();" style="padding:4px; font-size:11px;">
+              <label>2. PREVIOUSLY CONNECTED WITH:</label>
+              <input type="text" id="profConnected" value="${prof.ConnectedWith || ''}" placeholder="e.g. +8801711223344" oninput="globalProfileDB['${activeTargetNumber}'].ConnectedWith=this.value; savePersistentProfileDB();" style="padding:4px; font-size:11px;">
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function formatDateToDDMMYYYY(dateStr) {
+      if (!dateStr) return "";
+      let parts = dateStr.split('-');
+      if (parts.length === 3) {
+        return `${parts[2]}.${parts[1]}.${parts[0]}`;
+      }
+      return dateStr;
+    }
+
+    function triggerTargetImageUpload(num, imgField) {
+      let inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
+      inp.onchange = e => {
+        let reader = new FileReader();
+        reader.onload = ev => {
+          if(!globalProfileDB[num]) globalProfileDB[num] = {};
+          globalProfileDB[num][imgField] = ev.target.result;
+          savePersistentProfileDB();
+          renderActiveTargetProfile();
+        };
+        reader.readAsDataURL(e.target.files[0]);
+      };
+      inp.click();
+    }
+
+    function renderCommonCheckboxes() {
+      let box = document.getElementById('commonCheckboxesContainer');
+      box.innerHTML = "";
+      detectedTargets.forEach(num => {
+        box.innerHTML += `<label style="font-weight:normal; font-size:11px; display:inline-flex; align-items:center; gap:4px; background:#111827; padding:4px 8px; border:1px solid var(--border); border-radius:4px; color:#ffffff;"><input type="checkbox" value="${num}" class="common-target-chk" checked> ${num}</label>`;
+      });
+    }
+
+    function getDateRangeString(rowsList) {
+      if (!rowsList || rowsList.length === 0) return "";
+      let dates = rowsList.map(r => r.Date).filter(Boolean);
+      if (dates.length === 0) return "";
+      return `(${formatDateToDDMMYYYY(dates[0])} - ${formatDateToDDMMYYYY(dates[dates.length - 1])})`;
+    }
+
+    function renderMultiTables() {
+      if (!activeTargetNumber) return;
+      let rows = cleanedMultiCDR.filter(r => r.A_Party === activeTargetNumber);
+      if(!globalProfileDB[activeTargetNumber]) globalProfileDB[activeTargetNumber] = {};
+      if(!globalProfileDB[activeTargetNumber].BPartyProfiles) globalProfileDB[activeTargetNumber].BPartyProfiles = {};
+      let bProfiles = globalProfileDB[activeTargetNumber].BPartyProfiles;
+
+      let minUsageB = parseInt(document.getElementById('minUsage-bparty').value) || 0;
+      let searchB = document.getElementById('bpartySearchInput').value.toLowerCase();
+      let bMap = {};
+      rows.forEach(r => {
+        if (r.B_Party && isOriginalNumberFilter(r.B_Party)) {
+          if(!bMap[r.B_Party]) bMap[r.B_Party] = { count: 0, dur: 0, rows: [] };
+          bMap[r.B_Party].count++; 
+          bMap[r.B_Party].dur += r.Duration;
+          bMap[r.B_Party].rows.push(r);
+        }
+      });
+      let sortedB = Object.keys(bMap).filter(b => bMap[b].count >= minUsageB).sort((a,b) => bMap[b].count - bMap[a].count);
+      
+      let allBMinUsage = parseInt(document.getElementById('allBpartyMinUsage').value) || 1;
+      let allBOrigToggle = document.getElementById('allBpartyOriginalToggle').checked;
+      let allBFiltered = Object.keys(bMap).filter(b => {
+        if (allBOrigToggle && !isOriginalNumberFilter(b)) return false;
+        return bMap[b].count >= allBMinUsage;
+      });
+      let allBPartyNumbersList = allBFiltered.map(b => formatBPartyNumber(b));
+      document.getElementById('outputAllBParties').value = allBPartyNumbersList.join(', ');
+
+      let hB = '<table id="table-bparty"><thead><tr><th style="width:140px;">Number & Pic</th><th>Name / Caller ID / NID Pic / Location / IMEI</th><th style="width:180px;">Usage & Duration</th><th style="width:80px;">Action</th></tr></thead><tbody>';
+      sortedB.forEach(b => {
+        if(b.toLowerCase().includes(searchB)) {
+          let dateRange = getDateRangeString(bMap[b].rows);
+          let usageText = `${bMap[b].count}ti ${dateRange}, Dur: ${bMap[b].dur}s`;
+          
+          if(!bProfiles[b]) bProfiles[b] = { details: "", pic: "" };
+          let bp = bProfiles[b];
+
+          let centralMatch = centralAllProfilesDB[b];
+          let defaultDetailsVal = bp.details || ((centralMatch && isAdminUser) ? `Previously connected with: ${centralMatch.connectedWith || ''} (User: ${centralMatch.submittedBy || ''})` : '');
+
+          hB += `<tr>
+            <td>
+              <div style="font-weight:bold; color:#818cf8; cursor:pointer; margin-bottom:6px; font-size:11px;" onclick="viewCdrHistory('${b}', 'bparty')">${formatBPartyNumber(b)}</div>
+              <div class="bparty-img-cell" onclick="triggerBPartyImageUpload('${b}')" onfocus="currentlyFocusedBPartyBox='${b}'" tabindex="0" title="Click or Paste NID/Pic here">
+                <img src="${bp.pic || ''}" style="${bp.pic ? '' : 'display:none;'} width:100%; height:100%; object-fit:cover;">
+                <span style="${bp.pic ? 'display:none;' : ''} font-size:9px; color:#9ca3af; text-align:center;">Click/Paste</span>
+              </div>
+            </td>
+            <td>
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <textarea rows="3" placeholder="Enter Name, Location, NID..." oninput="updateBPartyDetails('${b}', this.value)" style="width:100%; background:#0b0f19; color:#ffffff; font-size:11px; resize:vertical;">${defaultDetailsVal}</textarea>
+              </div>
+            </td>
+            <td><b style="font-size:11px;">${usageText}</b></td>
+            <td>
+              <div style="display:flex; flex-direction:column; gap:4px;">
+                <button class="btn btn-danger" style="padding:4px 6px; font-size:10px; margin:0;" onclick="deleteBPartyRow('${b}')">🗑️ Del</button>
+              </div>
+            </td>
+          </tr>`;
+        }
+      });
+      document.getElementById('container-bparty').innerHTML = hB + '</tbody></table>';
+
+      let minUsageN = parseInt(document.getElementById('minUsage-nightBparty').value) || 0;
+      let nMap = {};
+      rows.forEach(r => {
+        let hr = parseInt(r.Hour, 10) || 0;
+        if (hr >= 0 && hr < 8 && r.B_Party && isOriginalNumberFilter(r.B_Party)) {
+          if(!nMap[r.B_Party]) nMap[r.B_Party] = { count: 0, dur: 0, rows: [] };
+          nMap[r.B_Party].count++; 
+          nMap[r.B_Party].dur += r.Duration;
+          nMap[r.B_Party].rows.push(r);
+        }
+      });
+      let sortedN = Object.keys(nMap).filter(b => nMap[b].count >= minUsageN).sort((a,b) => nMap[b].count - nMap[a].count);
+      
+      let hN = '<table id="table-nightBparty"><thead><tr><th style="width:140px;">Number & Pic</th><th>Name / Caller ID / NID Pic / Location / IMEI</th><th style="width:180px;">Usage & Duration</th><th style="width:80px;">Action</th></tr></thead><tbody>';
+      sortedN.forEach(b => {
+        let dateRange = getDateRangeString(nMap[b].rows);
+        let usageText = `${nMap[b].count}ti ${dateRange}, Dur: ${nMap[b].dur}s`;
+        if(!bProfiles[b]) bProfiles[b] = { details: "", pic: "" };
+        let bp = bProfiles[b];
+
+        hN += `<tr>
+          <td>
+            <div style="font-weight:bold; color:#818cf8; cursor:pointer; margin-bottom:6px; font-size:11px;" onclick="viewCdrHistory('${b}', 'bparty')">${formatBPartyNumber(b)}</div>
+            <div class="bparty-img-cell" onclick="triggerBPartyImageUpload('${b}')" onfocus="currentlyFocusedBPartyBox='${b}'" tabindex="0" title="Click or Paste NID/Pic here">
+              <img src="${bp.pic || ''}" style="${bp.pic ? '' : 'display:none;'} width:100%; height:100%; object-fit:cover;">
+              <span style="${bp.pic ? 'display:none;' : ''} font-size:9px; color:#9ca3af; text-align:center;">Click/Paste</span>
+            </div>
+          </td>
+          <td>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <textarea rows="3" placeholder="Enter Name, Location, NID..." oninput="updateBPartyDetails('${b}', this.value)" style="width:100%; background:#0b0f19; color:#ffffff; font-size:11px; resize:vertical;">${bp.details || ''}</textarea>
+            </div>
+          </td>
+          <td><b style="font-size:11px;">${usageText}</b></td>
+          <td>
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <button class="btn btn-danger" style="padding:4px 6px; font-size:10px; margin:0;" onclick="deleteBPartyRow('${b}')">🗑️ Del</button>
+            </div>
+          </td>
+        </tr>`;
+      });
+      document.getElementById('container-nightBparty').innerHTML = hN + '</tbody></table>';
+
+      renderLocationTable('location', 'container-location', rows, false);
+      renderLocationTable('nightLocation', 'container-nightLocation', rows, true);
+      renderImeiTable(rows);
+    }
+
+    function updateBPartyDetails(bNum, val) {
+      if(!globalProfileDB[activeTargetNumber]) globalProfileDB[activeTargetNumber] = {};
+      if(!globalProfileDB[activeTargetNumber].BPartyProfiles) globalProfileDB[activeTargetNumber].BPartyProfiles = {};
+      if(!globalProfileDB[activeTargetNumber].BPartyProfiles[bNum]) globalProfileDB[activeTargetNumber].BPartyProfiles[bNum] = { details: "", pic: "" };
+      globalProfileDB[activeTargetNumber].BPartyProfiles[bNum].details = val;
+      savePersistentProfileDB();
+    }
+
+    function triggerBPartyImageUpload(bNum) {
+      currentlyFocusedBPartyBox = bNum;
+      let inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
+      inp.onchange = e => {
+        let reader = new FileReader();
+        reader.onload = ev => {
+          if(!globalProfileDB[activeTargetNumber]) globalProfileDB[activeTargetNumber] = {};
+          if(!globalProfileDB[activeTargetNumber].BPartyProfiles) globalProfileDB[activeTargetNumber].BPartyProfiles = {};
+          if(!globalProfileDB[activeTargetNumber].BPartyProfiles[bNum]) globalProfileDB[activeTargetNumber].BPartyProfiles[bNum] = { details: "", pic: "" };
+          globalProfileDB[activeTargetNumber].BPartyProfiles[bNum].pic = ev.target.result;
+          savePersistentProfileDB();
+          renderMultiTables();
+        };
+        reader.readAsDataURL(e.target.files[0]);
+      };
+      inp.click();
+    }
+
+    function deleteBPartyRow(bNum) {
+      if (confirm(`Are you sure you want to remove ${bNum} from view?`)) {
+        cleanedMultiCDR = cleanedMultiCDR.filter(r => !(r.A_Party === activeTargetNumber && r.B_Party === bNum));
+        renderMultiTables();
+      }
+    }
+
+    function renderLocationTable(limitId, containerId, rows, isNight) {
+      let limitVal = document.getElementById(`limit-${limitId}`).value;
+      let lMap = {};
+      rows.forEach(r => {
+        let hr = parseInt(r.Hour, 10) || 0;
+        if (!isNight || (hr >= 0 && hr < 8)) {
+          let loc = r.Address || (r.LAC && r.Cell ? `LAC: ${r.LAC}, Cell: ${r.Cell}` : "");
+          if(!lMap[loc]) lMap[loc] = { count: 0, lac: r.LAC, cell: r.Cell, rows: [] };
+          lMap[loc].count++;
+          lMap[loc].rows.push(r);
+        }
+      });
+      let sortedL = Object.keys(lMap).sort((a,b) => lMap[b].count - lMap[a].count);
+      if(limitVal !== 'all') sortedL = sortedL.slice(0, parseInt(limitVal));
+
+      let hL = `<table id="table-${limitId}"><thead><tr><th style="width:45px;">Ser</th><th>Address / Location Description</th><th style="width:80px;">LAC</th><th style="width:80px;">Cell ID</th><th style="width:140px;">${isNight ? 'Night ' : ''}Usage</th><th style="width:70px;">Action</th></tr></thead><tbody>`;
+      sortedL.forEach((l, idx) => {
+        let dateRange = getDateRangeString(lMap[l].rows);
+        let usageText = `${lMap[l].count}ti ${dateRange}`;
+        hL += `<tr>
+          <td>${idx+1}</td>
+          <td><b style="cursor:pointer; color:#818cf8;" onclick="viewCdrHistory('${l}', 'address')">${l}</b></td>
+          <td>${lMap[l].lac || ''}</td>
+          <td>${lMap[l].cell || ''}</td>
+          <td><b>${usageText}</b></td>
+          <td><button class="btn btn-info" style="padding:2px 6px; font-size:10px;" onclick="viewCdrHistory('${l}', 'address')">CDR</button></td>
+        </tr>`;
+      });
+      document.getElementById(containerId).innerHTML = hL + '</tbody></table>';
+    }
+
+    function renderImeiTable(rows) {
+      let limitVal = document.getElementById('limit-imei').value;
+      let iMap = {};
+      rows.forEach(r => {
+        if(r.IMEI) {
+          if(!iMap[r.IMEI]) iMap[r.IMEI] = { count: 0, rows: [] };
+          iMap[r.IMEI].count++;
+          iMap[r.IMEI].rows.push(r);
+        }
+      });
+      let sortedI = Object.keys(iMap).sort((a,b) => iMap[b].count - iMap[a].count);
+      if(limitVal !== 'all') sortedI = sortedI.slice(0, parseInt(limitVal));
+
+      let savedImeiModels = (globalProfileDB[activeTargetNumber] && globalProfileDB[activeTargetNumber].ImeiModels) ? globalProfileDB[activeTargetNumber].ImeiModels : {};
+
+      let hI = `<table id="table-imei"><thead><tr><th style="width:45px;">Ser</th><th>IMEI Number</th><th>Mobile Model Name</th><th style="width:130px;">Usage</th><th style="width:70px;">Action</th></tr></thead><tbody>`;
+      sortedI.forEach((i, idx) => {
+        let dateRange = getDateRangeString(iMap[i].rows);
+        let usageText = `${iMap[i].count}ti ${dateRange}`;
+        let correctedImei = correctImeiNumber(i);
+        let existingModel = savedImeiModels[i] || "";
+
+        hI += `<tr>
+          <td>${idx+1}</td>
+          <td><b style="cursor:pointer; color:#818cf8;" onclick="window.open('https://www.imei.info/?imei=${correctedImei}', '_blank')">${i}</b></td>
+          <td>
+            <input type="text" value="${existingModel}" placeholder="Type model..." oninput="savePersistentProfileDB()" style="padding:4px; background:#0b0f19; color:#ffffff; font-size:11px; width:100%;">
+          </td>
+          <td><b>${usageText}</b></td>
+          <td><button class="btn btn-info" style="padding:2px 6px; font-size:10px;" onclick="viewCdrHistory('${i}', 'imei')">CDR</button></td>
+        </tr>`;
+      });
+      document.getElementById('container-imei').innerHTML = hI + '</tbody></table>';
+    }
+
+    function runAdminGlobalSearch() {
+      if (!isAdminUser) return;
+      let query = document.getElementById('adminGlobalSearchInput').value.trim().toLowerCase();
+      let resContainer = document.getElementById('adminGlobalSearchResultContainer');
+      if (!query) { resContainer.innerHTML = `<p style="color:#ef4444;">Please enter search query!</p>`; return; }
+
+      let matches = [];
+      cleanedMultiCDR.forEach(r => {
+        if (r.A_Party.toLowerCase().includes(query) || r.B_Party.toLowerCase().includes(query) || (r.Address && r.Address.toLowerCase().includes(query)) || (r.IMEI && r.IMEI.toLowerCase().includes(query))) {
+          matches.push(r);
+        }
+      });
+
+      if (matches.length === 0) {
+        resContainer.innerHTML = `<p style="color:#9ca3af;">No matching records found.</p>`;
+        return;
+      }
+
+      let h = `<table style="font-size:10px;"><thead><tr><th>Target</th><th>B-Party</th><th>Date</th></tr></thead><tbody>`;
+      matches.slice(0, 20).forEach(m => {
+        h += `<tr><td><b>${m.A_Party}</b></td><td>${m.B_Party}</td><td>${m.Date}</td></tr>`;
+      });
+      h += `</tbody></table>`;
+      resContainer.innerHTML = h;
+    }
+
+    function downloadProfileReportWordHub() {
+      let targetNum = activeTargetNumber;
+      let targetRows = cleanedMultiCDR.filter(r => r.A_Party === targetNum);
+      let prof = globalProfileDB[targetNum] || {};
+      let bProfiles = prof.BPartyProfiles || {};
+      let dates = targetRows.map(r => r.Date).filter(Boolean).sort();
+      let dateRangeStr = dates.length > 0 ? ` (${formatDateToDDMMYYYY(dates[0])} - ${formatDateToDDMMYYYY(dates[dates.length - 1])})` : "";
+      
+      let imeiSummary = {};
+      targetRows.forEach(r => { if(r.IMEI) imeiSummary[r.IMEI] = (imeiSummary[r.IMEI] || 0) + 1; });
+      let summaryStr = Object.keys(imeiSummary).map(k => `${k} (${imeiSummary[k]}x)`).join(", ");
+      let submittedByStr = isAdminUser ? `<br><b>Submitted by:</b> ${prof.SubmittedBy || currentUserEmail}` : '';
+
+      let targetImgHtml = prof.Image ? `<img src="${prof.Image}" style="width:90px; height:110px; object-fit:cover;">` : 'No Target Pic';
+      let nidImgHtml = prof.NidImage ? `<img src="${prof.NidImage}" style="width:90px; height:110px; object-fit:cover;">` : 'No NID Pic';
+
+      let htmlContent = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+        <head><meta charset='utf-8'><title>Complete Profile Report</title>
+        <style>
+          body { font-family: 'Times New Roman', serif; font-size: 11pt; color: #000; }
+          table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px; }
+          th, td { border: 1px solid #000; padding: 6px 8px; text-align: left; vertical-align: top; font-size: 10pt; }
+          th { background-color: #f2f2f2; font-weight: bold; }
+          h2 { text-align: center; color: #000; margin-bottom: 5px; }
+          .section-title { font-weight: bold; font-size: 11pt; margin-top: 15px; margin-bottom: 5px; color: #000; }
+        </style>
+        </head>
+        <body>
+          <h2>FORENSIC INTELLIGENCE SUITE - PROFILE REPORT</h2>
+          <hr style="border: 1px solid #000; margin-bottom: 15px;">
+          <table>
+            <tr>
+              <td style="width:100px; text-align:center;">${targetImgHtml}</td>
+              <td style="width:100px; text-align:center;">${nidImgHtml}</td>
+              <td>
+                <b>Target / ID:</b> ${targetNum}${dateRangeStr} ${submittedByStr}<br>
+                <b>Name / NID:</b> ${prof.Name || ''}<br>
+                <b>Previously Connected:</b> ${prof.ConnectedWith || ''}<br>
+                <b>IMEI & Usage:</b> ${summaryStr}
+              </td>
+            </tr>
+          </table>
+      `;
+
+      // 1. Total B-Party (using screen current min usage & search filter)
+      let minUsageB = parseInt(document.getElementById('minUsage-bparty').value) || 0;
+      let bMap = {};
+      targetRows.forEach(r => {
+        if (r.B_Party && isOriginalNumberFilter(r.B_Party)) {
+          if(!bMap[r.B_Party]) bMap[r.B_Party] = { count: 0, dur: 0, rows: [] };
+          bMap[r.B_Party].count++; bMap[r.B_Party].dur += r.Duration; bMap[r.B_Party].rows.push(r);
+        }
+      });
+      let sortedB = Object.keys(bMap).filter(b => bMap[b].count >= minUsageB).sort((a,b) => bMap[b].count - bMap[a].count);
+
+      htmlContent += `<div class="section-title">Total B-Party Usage (Min Usage: ${minUsageB})</div>
+        <table>
+          <tr><th style="width:130px;">Number & Pic</th><th>Name / Details / Location</th><th style="width:150px;">Usage & Duration</th></tr>`;
+      sortedB.forEach(b => {
+        let dRange = getDateRangeString(bMap[b].rows);
+        let bp = bProfiles[b] || {};
+        let bpPicHtml = bp.pic ? `<img src="${bp.pic}" style="width:70px; height:80px; object-fit:cover;"><br>` : '';
+        htmlContent += `<tr><td>${bpPicHtml}<b>${b}</b></td><td>${bp.details || ''}</td><td>${bMap[b].count}ti ${dRange}, Dur: ${bMap[b].dur}s</td></tr>`;
+      });
+      if(sortedB.length === 0) htmlContent += `<tr><td colspan="3" style="text-align:center;">No records found</td></tr>`;
+      htmlContent += `</table>`;
+
+      // 2. Night B-Party
+      let minUsageN = parseInt(document.getElementById('minUsage-nightBparty').value) || 0;
+      let nMap = {};
+      targetRows.forEach(r => {
+        let hr = parseInt(r.Hour, 10) || 0;
+        if (hr >= 0 && hr < 8 && r.B_Party && isOriginalNumberFilter(r.B_Party)) {
+          if(!nMap[r.B_Party]) nMap[r.B_Party] = { count: 0, dur: 0, rows: [] };
+          nMap[r.B_Party].count++; nMap[r.B_Party].dur += r.Duration; nMap[r.B_Party].rows.push(r);
+        }
+      });
+      let sortedN = Object.keys(nMap).filter(b => nMap[b].count >= minUsageN).sort((a,b) => nMap[b].count - bMap[a].count);
+
+      htmlContent += `<div class="section-title">Night B-Party Usage (12 AM - 8 AM)</div>
+        <table>
+          <tr><th style="width:130px;">Number & Pic</th><th>Name / Details / Location</th><th style="width:150px;">Usage & Duration</th></tr>`;
+      sortedN.forEach(b => {
+        let dRange = getDateRangeString(nMap[b].rows);
+        let bp = bProfiles[b] || {};
+        let bpPicHtml = bp.pic ? `<img src="${bp.pic}" style="width:70px; height:80px; object-fit:cover;"><br>` : '';
+        htmlContent += `<tr><td>${bpPicHtml}<b>${b}</b></td><td>${bp.details || ''}</td><td>${nMap[b].count}ti ${dRange}, Dur: ${nMap[b].dur}s</td></tr>`;
+      });
+      if(sortedN.length === 0) htmlContent += `<tr><td colspan="3" style="text-align:center;">No records found</td></tr>`;
+      htmlContent += `</table>`;
+
+      // 3. All Location (respecting screen limit selector)
+      let limitLoc = document.getElementById('limit-location').value;
+      let lMap = {};
+      targetRows.forEach(r => {
+        let loc = r.Address || (r.LAC && r.Cell ? `LAC: ${r.LAC}, Cell: ${r.Cell}` : "");
+        if(!lMap[loc]) lMap[loc] = { count: 0, lac: r.LAC, cell: r.Cell, rows: [] };
+        lMap[loc].count++; lMap[loc].rows.push(r);
+      });
+      let sortedL = Object.keys(lMap).sort((a,b) => lMap[b].count - lMap[a].count);
+      if(limitLoc !== 'all') sortedL = sortedL.slice(0, parseInt(limitLoc));
+
+      htmlContent += `<div class="section-title">All Location Analysis</div>
+        <table>
+          <tr><th style="width:45px;">Ser</th><th>Address / Location Description</th><th style="width:80px;">LAC</th><th style="width:80px;">Cell ID</th><th style="width:120px;">Usage Count</th></tr>`;
+      sortedL.forEach((l, idx) => {
+        htmlContent += `<tr><td>${idx+1}</td><td>${l}</td><td>${lMap[l].lac || ''}</td><td>${lMap[l].cell || ''}</td><td>${lMap[l].count}ti</td></tr>`;
+      });
+      if(sortedL.length === 0) htmlContent += `<tr><td colspan="5" style="text-align:center;">No records found</td></tr>`;
+      htmlContent += `</table>`;
+
+      // 4. Night Location
+      let limitNightLoc = document.getElementById('limit-nightLocation').value;
+      let nlMap = {};
+      targetRows.forEach(r => {
+        let hr = parseInt(r.Hour, 10) || 0;
+        if (hr >= 0 && hr < 8) {
+          let loc = r.Address || (r.LAC && r.Cell ? `LAC: ${r.LAC}, Cell: ${r.Cell}` : "");
+          if(!nlMap[loc]) nlMap[loc] = { count: 0, lac: r.LAC, cell: r.Cell, rows: [] };
+          nlMap[loc].count++; nlMap[loc].rows.push(r);
+        }
+      });
+      let sortedNL = Object.keys(nlMap).sort((a,b) => nlMap[b].count - nlMap[a].count);
+      if(limitNightLoc !== 'all') sortedNL = sortedNL.slice(0, parseInt(limitNightLoc));
+
+      htmlContent += `<div class="section-title">Night Location Analysis (12 AM - 8 AM)</div>
+        <table>
+          <tr><th style="width:45px;">Ser</th><th>Address / Location Description</th><th style="width:80px;">LAC</th><th style="width:80px;">Cell ID</th><th style="width:120px;">Usage Count</th></tr>`;
+      sortedNL.forEach((l, idx) => {
+        htmlContent += `<tr><td>${idx+1}</td><td>${l}</td><td>${nlMap[l].lac || ''}</td><td>${nlMap[l].cell || ''}</td><td>${nlMap[l].count}ti</td></tr>`;
+      });
+      if(sortedNL.length === 0) htmlContent += `<tr><td colspan="5" style="text-align:center;">No records found</td></tr>`;
+      htmlContent += `</table>`;
+
+      // 5. IMEI Lookup
+      let limitImei = document.getElementById('limit-imei').value;
+      let iMap = {};
+      targetRows.forEach(r => {
+        if(r.IMEI) {
+          if(!iMap[r.IMEI]) iMap[r.IMEI] = { count: 0, rows: [] };
+          iMap[r.IMEI].count++; iMap[r.IMEI].rows.push(r);
+        }
+      });
+      let sortedI = Object.keys(iMap).sort((a,b) => iMap[b].count - iMap[a].count);
+      if(limitImei !== 'all') sortedI = sortedI.slice(0, parseInt(limitImei));
+      let savedImeiModels = (globalProfileDB[targetNum] && globalProfileDB[targetNum].ImeiModels) ? globalProfileDB[targetNum].ImeiModels : {};
+
+      htmlContent += `<div class="section-title">IMEI Lookup Analysis</div>
+        <table>
+          <tr><th style="width:45px;">Ser</th><th>IMEI Number</th><th>Mobile Model Name</th><th style="width:120px;">Usage Count</th></tr>`;
+      sortedI.forEach((i, idx) => {
+        let mdl = savedImeiModels[i] || "";
+        htmlContent += `<tr><td>${idx+1}</td><td><b>${i}</b></td><td>${mdl}</td><td>${iMap[i].count}ti</td></tr>`;
+      });
+      if(sortedI.length === 0) htmlContent += `<tr><td colspan="4" style="text-align:center;">No records found</td></tr>`;
+      htmlContent += `</table>`;
+
+      htmlContent += `</body></html>`;
+      let blob = new Blob(['\ufeff' + htmlContent], { type: 'application/msword' });
+      let url = URL.createObjectURL(blob);
+      let a = document.createElement('a'); a.href = url;
+      a.download = `Profile_Report_${targetNum}.doc`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
+
+    function downloadProfileReportWord(tabType) {
+      downloadProfileReportWordHub();
+    }
+
+    function viewCdrHistory(filterVal, filterType) {
+      let rows = cleanedMultiCDR.filter(r => r.A_Party === activeTargetNumber);
+      if (filterType === 'bparty') {
+        rows = rows.filter(r => r.B_Party === filterVal);
+      } else if (filterType === 'address') {
+        rows = rows.filter(r => r.Address === filterVal);
+      } else if (filterType === 'imei') {
+        rows = rows.filter(r => r.IMEI === filterVal);
+      }
+
+      let container = document.getElementById('historyTableContainer');
+      let h = `<table id="table-history"><thead><tr>
+        <th style="width:95px;">Date</th><th style="width:75px;">Time</th><th>Aparty</th><th>Bparty/Name</th><th style="width:80px;">Duration</th><th style="width:70px;">Type</th><th style="width:70px;">Network</th><th style="width:70px;">LAC</th><th style="width:70px;">Cell</th><th>Imei</th><th>Address</th>
+      </tr></thead><tbody>`;
+
+      rows.forEach(r => {
+        h += `<tr>
+          <td>${r.Date}</td><td>${r.Time}</td><td>${r.A_Party}</td><td><b>${r.B_Party}</b></td><td>${r.Duration}</td><td>${r.UsageType}</td><td>${r.NetworkType}</td><td>${r.LAC}</td><td>${r.Cell}</td><td>${r.IMEI}</td><td>${r.Address}</td>
+        </tr>`;
+      });
+      container.innerHTML = h + '</tbody></table>';
+      document.getElementById('historySection').style.display = 'block';
+      document.getElementById('historySection').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function closeHistorySection() { document.getElementById('historySection').style.display = 'none'; }
+    function handleOriginalSwitchChange() { renderMultiTables(); }
+
+    function switchTab(name) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById(`tab-${name}`).classList.add('active');
+    }
+
+    function copyOutputText(elementId) {
+      let el = document.getElementById(elementId);
+      if(!el) return;
+      el.select();
+      document.execCommand('copy');
+      alert("Copied to clipboard!");
+    }
+
+    function renderCustomizedTable(rows) {
+      document.getElementById('customizedTargetTitle').innerText = `Customized CDR for Target: ${activeTargetNumber}`;
+      let h = `<table id="table-customized"><thead><tr>
+        <th style="width:95px;">Date</th><th style="width:75px;">Time</th><th>Aparty</th><th>Bparty/Name</th><th style="width:80px;">Duration</th><th style="width:70px;">Type</th><th style="width:70px;">Network</th><th style="width:70px;">LAC</th><th style="width:70px;">Cell</th><th>Imei</th><th>Address</th>
+      </tr></thead><tbody>`;
+
+      rows.forEach(r => {
+        h += `<tr>
+          <td>${r.Date}</td><td>${r.Time}</td><td>${r.A_Party}</td><td><b>${r.B_Party}</b></td><td>${r.Duration}</td><td>${r.UsageType}</td><td>${r.NetworkType}</td><td>${r.LAC}</td><td>${r.Cell}</td><td>${r.IMEI}</td><td>${r.Address}</td>
+        </tr>`;
+      });
+      document.getElementById('container-customized').innerHTML = h + '</tbody></table>';
+    }
+
+    function applyCustomizedFilter() {
+      let singleDayVal = document.getElementById('customFilterSingleDay').value;
+      let typeVal = document.getElementById('customFilterType').value;
+      let dirVal = document.getElementById('customFilterDirection').value;
+      let origBOnly = document.getElementById('customFilterOriginalBParty').checked;
+
+      let rows = cleanedMultiCDR.filter(r => r.A_Party === activeTargetNumber);
+
+      let filtered = rows.filter(r => {
+        if (singleDayVal && !r.Date.includes(singleDayVal)) return false;
+        if (typeVal !== 'All' && !r.UsageType.toLowerCase().includes(typeVal.toLowerCase())) return false;
+        if (dirVal === 'Incoming' && !/(mtc|smsmt)/i.test(r.UsageType)) return false;
+        if (dirVal === 'Outgoing' && !/(moc|smsmo)/i.test(r.UsageType)) return false;
+        if (origBOnly && !isOriginalNumberFilter(r.B_Party)) return false;
+        return true;
+      });
+
+      renderCustomizedTable(filtered);
+      alert(`Filter applied! Found ${filtered.length} records.`);
+    }
+
+    function resetCustomizedFilter() {
+      document.getElementById('customFilterFrom').value = "";
+      document.getElementById('customFilterTo').value = "";
+      document.getElementById('customFilterSingleDay').value = "";
+      document.getElementById('customFilterType').value = "All";
+      document.getElementById('customFilterDirection').value = "Any";
+      document.getElementById('customFilterOriginalBParty').checked = false;
+      renderCustomizedTable(cleanedMultiCDR.filter(r => r.A_Party === activeTargetNumber));
+    }
+
+    function downloadCustomizedWord() {
+      let tableHtml = document.getElementById('table-customized').outerHTML;
+      let blob = new Blob(['\ufeff' + tableHtml], { type: 'application/msword' });
+      let url = URL.createObjectURL(blob);
+      let a = document.createElement('a'); a.href = url;
+      a.download = `Customized_CDR_${activeTargetNumber}.doc`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
+
+    function downloadHistoryWord() {
+      let tableEl = document.getElementById('table-history');
+      if (!tableEl) return;
+      let tableHtml = tableEl.outerHTML;
+      let blob = new Blob(['\ufeff' + tableHtml], { type: 'application/msword' });
+      let url = URL.createObjectURL(blob);
+      let a = document.createElement('a'); a.href = url;
+      a.download = `History_CDR_${activeTargetNumber}.doc`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
+
+    function downloadCommonWordLegal() {
+      let cat = document.getElementById('commonCategorySelect').value;
+      let inputTxt = document.getElementById('commonInputNumbers').value;
+      let chkBoxes = Array.from(document.querySelectorAll('.common-target-chk:checked')).map(c => c.value);
+      let originalOnly = document.getElementById('commonOriginalNumbersOnly').checked;
+      
+      let targets = inputTxt ? inputTxt.split(',').map(s => s.trim()).filter(Boolean) : chkBoxes;
+      if(targets.length < 2) { alert("Please select or input at least 2 target numbers for common analysis!"); return; }
+
+      let targetEntityRowsMap = {};
+      targets.forEach(tNum => {
+        let tRows = cleanedMultiCDR.filter(r => r.A_Party === tNum);
+        let entityMap = {};
+        tRows.forEach(r => {
+          let val = "";
+          let lacVal = "", cellVal = "";
+          if (cat === 'bparty' && r.B_Party) val = r.B_Party;
+          else if (cat === 'nightBparty') {
+            let hr = parseInt(r.Hour, 10) || 0;
+            if (hr >= 0 && hr < 8 && r.B_Party) val = r.B_Party;
+          } else if (cat === 'location' && r.Address) {
+            val = r.Address; lacVal = r.LAC; cellVal = r.Cell;
+          } else if (cat === 'nightLocation') {
+            let hr = parseInt(r.Hour, 10) || 0;
+            if (hr >= 0 && hr < 8 && r.Address) { val = r.Address; lacVal = r.LAC; cellVal = r.Cell; }
+          } else if (cat === 'imei' && r.IMEI) val = r.IMEI;
+
+          if (val) {
+            if (cat.includes('bparty') && originalOnly && !isOriginalNumberFilter(val)) return;
+            if(!entityMap[val]) entityMap[val] = { rows: [], lac: lacVal, cell: cellVal };
+            entityMap[val].rows.push(r);
+          }
+        });
+        targetEntityRowsMap[tNum] = entityMap;
+      });
+
+      let allEntitiesSet = new Set();
+      targets.forEach(tNum => {
+        Object.keys(targetEntityRowsMap[tNum]).forEach(e => allEntitiesSet.add(e));
+      });
+
+      let results = [];
+      allEntitiesSet.forEach(entity => {
+        let matchingTargets = [];
+        let detailsMap = {};
+        let entityLac = "", entityCell = "";
+        targets.forEach(tNum => {
+          if (targetEntityRowsMap[tNum][entity]) {
+            matchingTargets.push(tNum);
+            let dataObj = targetEntityRowsMap[tNum][entity];
+            let rows = dataObj.rows;
+            if(dataObj.lac) entityLac = dataObj.lac;
+            if(dataObj.cell) entityCell = dataObj.cell;
+            let dates = rows.map(r => r.Date).filter(Boolean).sort();
+            detailsMap[tNum] = {
+              count: rows.length,
+              firstDate: dates.length > 0 ? formatDateToDDMMYYYY(dates[0]) : '',
+              lastDate: dates.length > 0 ? formatDateToDDMMYYYY(dates[dates.length - 1]) : ''
+            };
+          }
+        });
+
+        if (matchingTargets.length >= 2) {
+          results.push({ entity: entity, matchingTargets: matchingTargets, detailsMap: detailsMap, lac: entityLac, cell: entityCell });
+        }
+      });
+
+      let htmlContent = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+        <head><meta charset='utf-8'><title>Common Analysis Intelligence Report</title>
+        <style>
+          body { font-family: 'Times New Roman', serif; font-size: 11pt; color: #000; }
+          table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px; }
+          th, td { border: 1px solid #000; padding: 6px 8px; text-align: left; vertical-align: top; font-size: 10pt; }
+          th { background-color: #f2f2f2; font-weight: bold; }
+          h2 { text-align: center; color: #000; margin-bottom: 5px; }
+        </style>
+        </head>
+        <body>
+          <h2>COMMON ANALYSIS REPORT (${cat.toUpperCase()})</h2>
+          <hr style="border: 1px solid #000; margin-bottom: 15px;">
+          <table>
+            <tr>
+              <th style="width:45px;">Ser</th>
+              <th>Common Entity (${cat.toUpperCase()})</th>
+              <th>Found Across Targets & Interaction Details</th>
+            </tr>
+      `;
+
+      if (results.length === 0) {
+        htmlContent += `<tr><td colspan="3" style="text-align:center;">No common matching records found.</td></tr>`;
+      } else {
+        results.forEach((res, idx) => {
+          let detailsText = "";
+          res.matchingTargets.forEach(tNum => {
+            let d = res.detailsMap[tNum];
+            detailsText += `Target ${tNum}: connected ${d.count} times (${d.firstDate} - ${d.lastDate}); `;
+          });
+
+          let entityDisplay = res.entity;
+          if ((cat === 'location' || cat === 'nightLocation') && (res.lac || res.cell)) {
+            entityDisplay += `<br>LAC- ${res.lac || ''} CELL- ${res.cell || ''}`;
+          }
+
+          htmlContent += `
+            <tr>
+              <td>${idx + 1}</td>
+              <td><b>${entityDisplay}</b></td>
+              <td>Common between [<b>${res.matchingTargets.join(', ')}</b>]:<br>${detailsText}</td>
+            </tr>
+          `;
+        });
+      }
+
+      htmlContent += `</table></body></html>`;
+      let blob = new Blob(['\ufeff' + htmlContent], { type: 'application/msword' });
+      let url = URL.createObjectURL(blob);
+      let a = document.createElement('a'); a.href = url;
+      a.download = `Common_Analysis_${cat}.doc`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
+
+    function processImeiSorting() {
+      let text = document.getElementById('imeiSorterInput').value;
+      let numbers = text.match(/\d{10,}/g) || [];
+      let uniqueNums = Array.from(new Set(numbers));
+      
+      let chunks = [];
+      for (let i = 0; i < uniqueNums.length; i += 5) {
+        let chunkNums = uniqueNums.slice(i, i + 5).join(' ');
+        chunks.push(`IMEI-MS ${chunkNums}`);
+      }
+      document.getElementById('imeiSorterOutput').value = chunks.join('\n');
+    }
+
+    function processAdvancedNumberSorting() {
+      let text = document.getElementById('sorterInputArea').value;
+      let rawNums = text.match(/[\d\+\-]+/g) || [];
+      let uniqueNums = Array.from(new Set(rawNums.map(n => formatBPartyNumber(n))));
+
+      let gp = [], robi = [], blink = [], ttalk = [];
+
+      uniqueNums.forEach(num => {
+        let clean = num.replace(/\D/g, "");
+        if (clean.startsWith("880")) clean = clean.slice(3);
+        if (clean.startsWith("0")) clean = clean.slice(1);
+        
+        let localNum = clean;
+
+        if (/^1[37]\d{8}$/.test(clean)) gp.push(localNum);
+        else if (/^1[49]\d{8}$/.test(clean)) blink.push(localNum);
+        else if (/^1[68]\d{8}$/.test(clean)) robi.push(localNum);
+        else if (/^15\d{8}$/.test(clean)) ttalk.push(localNum);
+      });
+
+      function formatOperatorOutputWithRepeatingPrefix(list, formatType) {
+        if (!list.length) return "[None]";
+        let chunks = [];
+        for (let i = 0; i < list.length; i += 5) {
+          let chunkNums = list.slice(i, i + 5).join(' ');
+          chunks.push(`${formatType} ${chunkNums}`);
+        }
+        return chunks.join('\n');
+      }
+
+      document.getElementById('outputGP').value = formatOperatorOutputWithRepeatingPrefix(gp, document.getElementById('formatGP').value);
+      document.getElementById('outputRobi').value = formatOperatorOutputWithRepeatingPrefix(robi, document.getElementById('formatRobi').value);
+      document.getElementById('outputBlink').value = formatOperatorOutputWithRepeatingPrefix(blink, document.getElementById('formatBlink').value);
+      document.getElementById('outputTtalk').value = formatOperatorOutputWithRepeatingPrefix(ttalk, document.getElementById('formatTtalk').value);
+    }
+
+    function runCommonAnalysis() {
+      let cat = document.getElementById('commonCategorySelect').value;
+      let inputTxt = document.getElementById('commonInputNumbers').value;
+      let chkBoxes = Array.from(document.querySelectorAll('.common-target-chk:checked')).map(c => c.value);
+      let originalOnly = document.getElementById('commonOriginalNumbersOnly').checked;
+      
+      let targets = inputTxt ? inputTxt.split(',').map(s => s.trim()).filter(Boolean) : chkBoxes;
+      if(targets.length < 2) { alert("Please select or input at least 2 target numbers for common intersection analysis!"); return; }
+
+      let targetEntityRowsMap = {};
+      targets.forEach(tNum => {
+        let tRows = cleanedMultiCDR.filter(r => r.A_Party === tNum);
+        let entityMap = {};
+        tRows.forEach(r => {
+          let val = "";
+          if (cat === 'bparty' && r.B_Party) val = r.B_Party;
+          else if (cat === 'nightBparty') {
+            let hr = parseInt(r.Hour, 10) || 0;
+            if (hr >= 0 && hr < 8 && r.B_Party) val = r.B_Party;
+          } else if (cat === 'location' && r.Address) val = r.Address;
+          else if (cat === 'nightLocation') {
+            let hr = parseInt(r.Hour, 10) || 0;
+            if (hr >= 0 && hr < 8 && r.Address) val = r.Address;
+          } else if (cat === 'imei' && r.IMEI) val = r.IMEI;
+
+          if (val) {
+            if (cat.includes('bparty') && originalOnly && !isOriginalNumberFilter(val)) return;
+            if(!entityMap[val]) entityMap[val] = [];
+            entityMap[val].push(r);
+          }
+        });
+        targetEntityRowsMap[tNum] = entityMap;
+      });
+
+      let allEntitiesSet = new Set();
+      targets.forEach(tNum => {
+        Object.keys(targetEntityRowsMap[tNum]).forEach(e => allEntitiesSet.add(e));
+      });
+
+      let results = [];
+      allEntitiesSet.forEach(entity => {
+        let matchingTargets = [];
+        let detailsMap = {};
+        targets.forEach(tNum => {
+          if (targetEntityRowsMap[tNum][entity]) {
+            matchingTargets.push(tNum);
+            let rows = targetEntityRowsMap[tNum][entity];
+            let dates = rows.map(r => r.Date).filter(Boolean).sort();
+            detailsMap[tNum] = {
+              count: rows.length,
+              firstDate: dates.length > 0 ? formatDateToDDMMYYYY(dates[0]) : '',
+              lastDate: dates.length > 0 ? formatDateToDDMMYYYY(dates[dates.length - 1]) : ''
+            };
+          }
+        });
+
+        if (matchingTargets.length >= 2) {
+          results.push({ entity: entity, matchingTargets: matchingTargets, detailsMap: detailsMap });
+        }
+      });
+
+      let hC = `<table id="table-common"><thead><tr>
+        <th style="width:45px;">Ser</th><th>Common Entity (${cat.toUpperCase()})</th><th>Found Across Targets & Interaction Details</th>
+      </tr></thead><tbody>`;
+
+      if (results.length === 0) {
+        hC += `<tr><td colspan="3" style="text-align:center;">No common matching records found across selected targets.</td></tr>`;
+      } else {
+        results.forEach((res, idx) => {
+          let detailsHtml = `<ul style="margin:0; padding-left:15px; font-size:10pt;">`;
+          res.matchingTargets.forEach(tNum => {
+            let d = res.detailsMap[tNum];
+            detailsHtml += `<li><b>Target ${tNum}:</b> connected ${d.count} times (${d.firstDate} - ${d.lastDate})</li>`;
+          });
+          detailsHtml += `</ul>`;
+
+          hC += `<tr>
+            <td>${idx + 1}</td>
+            <td><b>${res.entity}</b></td>
+            <td>Common between [<b>${res.matchingTargets.join(', ')}</b>]:<br>${detailsHtml}</td>
+          </tr>`;
+        });
+      }
+      hC += `</tbody></table>`;
+      document.getElementById('container-common').innerHTML = hC;
+    }
+
+    function copyTableToClipboard(tableId) {
+      let el = document.getElementById(tableId);
+      if (!el) return;
+      let range = document.createRange(); range.selectNode(el);
+      window.getSelection().removeAllRanges(); window.getSelection().addRange(range);
+      document.execCommand('copy'); alert("Table copied to clipboard!");
+    }
+
+    function downloadSectionExcel(filename, tableId) {
+      let el = document.getElementById(tableId);
+      if (!el) return;
+      let wb = XLSX.utils.table_to_book(el, { sheet: "Sheet1" });
+      XLSX.writeFile(wb, `${filename}.xlsx`);
+    }
+
+    /* --- SMS Analyser Module --- */
+    let globalSmsData = [];
+
+    async function processSmsFiles(event) {
+      const files = event.target.files;
+      if (!files.length) return;
+      globalSmsData = [];
+      const op = document.getElementById('smsOperator').value;
+
+      for (let file of files) {
+        await readSmsExcelFile(file, op);
+      }
+      populateSmsSelectors();
+      renderSmsTable();
+    }
+
+    function readSmsExcelFile(file, operator) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            workbook.SheetNames.forEach(sheetName => {
+              const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: "" });
+              parseOperatorSmsData(rows, operator);
+            });
+          } catch (err) {
+            console.error(err);
+            alert("File read error. Please use the Copy-Paste box above.");
+          }
+          resolve();
+        };
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    function processPastedData() {
+      const text = document.getElementById('paste-data').value.trim();
+      if (!text) { alert("No SMS data pasted!"); return; }
+
+      const operator = document.getElementById('smsOperator').value;
+      const lines = text.split("\n");
+      if (lines.length === 0) return;
+
+      let rows = [], startIndex = 0;
+      let firstLineCols = lines[0].split("\t");
+      let hasHeaderKeys = firstLineCols.some(c => {
+        let lower = c.trim().toLowerCase();
+        return lower.includes('subno') || lower.includes('transdate') || lower.includes('smscontent') || lower.includes('bsubno');
+      });
+
+      if (hasHeaderKeys) startIndex = 1;
+
+      for (let i = startIndex; i < lines.length; i++) {
+        let line = lines[i];
+        if (!line.trim()) continue;
+        let cols = line.split("\t");
+        if (cols.length < 2) continue;
+
+        let transdate = cols[0] || "", subno = cols[1] || "", bsubno = cols[2] || "", type = cols[3] || "";
+        let smscontent = cols.slice(4).join("\t") || "";
+        if (!smscontent && cols.length === 4) { smscontent = cols[3] || ""; type = ""; }
+
+        rows.push({
+          'transdate': transdate.trim(), 'subno': subno.trim(),
+          'bsubno': bsubno.trim(), 'type': type.trim(), 'smscontent': smscontent.trim()
+        });
+      }
+
+      parseOperatorSmsData(rows, operator);
+      populateSmsSelectors();
+      renderSmsTable();
+      alert(rows.length + " SMS rows loaded successfully!");
+    }
+
+    function parseOperatorSmsData(rows, operator) {
+      rows.forEach(row => {
+        let time = "", aParty = "", bParty = "", direction = "", content = "";
+        let cleanRow = {};
+        for (let key in row) { cleanRow[key.trim().toLowerCase()] = row[key]; }
+
+        if (operator === 'banglalink') {
+          time = cleanRow['transdate'] || cleanRow['time'] || cleanRow['date'] || '';
+          aParty = cleanRow['subno'] || cleanRow['a party'] || cleanRow['aparty'] || '';
+          bParty = cleanRow['bsubno'] || cleanRow['b party'] || cleanRow['bparty'] || '';
+          direction = cleanRow['type'] || cleanRow['direction'] || '';
+          content = cleanRow['smscontent'] || cleanRow['message content'] || cleanRow['content'] || '';
+        } else if (operator === 'robi') {
+          time = cleanRow['submit time'] || cleanRow['time'] || '';
+          let rawA = cleanRow['a party'] || cleanRow['aparty'] || '';
+          let rawB = cleanRow['b party'] || cleanRow['bparty'] || '';
+          direction = cleanRow['direction'] || '';
+          content = cleanRow['message content'] || cleanRow['content'] || '';
+
+          let dirUpper = String(direction).toUpperCase().trim();
+          if (dirUpper === 'SMSMT' || dirUpper.includes('MT')) {
+            aParty = rawB;
+            bParty = rawA;
+          } else {
+            aParty = rawA;
+            bParty = rawB;
+          }
+        } else if (operator === 'gp') {
+          time = cleanRow['starttime'] || cleanRow['time'] || '';
+          aParty = cleanRow['a party'] || cleanRow['aparty'] || '';
+          bParty = cleanRow['b party'] || cleanRow['bparty'] || '';
+          direction = cleanRow['direction'] || '';
+          content = cleanRow['message content'] || cleanRow['content'] || '';
+        } else if (operator === 'teletalk') {
+          time = cleanRow['timestamp:timestamp'] || cleanRow['time'] || '';
+          aParty = cleanRow['orgaddr:orgaddr'] || cleanRow['aparty'] || '';
+          bParty = cleanRow['destaddr:destaddr'] || cleanRow['bparty'] || '';
+          direction = "Teletalk";
+          content = cleanRow['ud:ud'] || cleanRow['content'] || '';
+        }
+
+        if (time || content || aParty || bParty) {
+          globalSmsData.push({ 
+            time: String(time), aParty: String(aParty).trim(), 
+            bParty: String(bParty).trim(), direction: String(direction), content: String(content) 
+          });
+        }
+      });
+    }
+
+    function populateSmsSelectors() {
+      const aContainer = document.getElementById('aparty-checkbox-container');
+      const bContainer = document.getElementById('bparty-checkbox-container');
+      aContainer.innerHTML = ""; bContainer.innerHTML = "";
+
+      let uniqueApartys = new Set(), uniqueBpartys = new Set();
+      globalSmsData.forEach(item => {
+        if (item.aParty && item.aParty !== "undefined" && item.aParty !== "") uniqueApartys.add(item.aParty);
+        if (item.bParty && item.bParty !== "undefined" && item.bParty !== "") uniqueBpartys.add(item.bParty);
+      });
+
+      let sortedApartys = Array.from(uniqueApartys).sort();
+      let sortedBpartys = Array.from(uniqueBpartys).sort();
+
+      if (sortedApartys.length === 0) {
+        aContainer.innerHTML = `<i style="color:#888;">No A-Party found</i>`;
+      } else {
+        aContainer.innerHTML = `<div><label><input type="checkbox" id="select-all-a" checked onchange="toggleSmsAll('a', this)"> <b>[Select All]</b></label></div>`;
+        sortedApartys.forEach(party => {
+          let div = document.createElement('div');
+          div.innerHTML = `<label><input type="checkbox" class="aparty-checkbox" value="${party}" checked onchange="renderSmsTable()"> ${party}</label>`;
+          aContainer.appendChild(div);
+        });
+      }
+
+      if (sortedBpartys.length === 0) {
+        bContainer.innerHTML = `<i style="color:#888;">No B-Party found</i>`;
+      } else {
+        bContainer.innerHTML = `<div><label><input type="checkbox" id="select-all-b" checked onchange="toggleSmsAll('b', this)"> <b>[Select All]</b></label></div>`;
+        sortedBpartys.forEach(party => {
+          let div = document.createElement('div');
+          div.innerHTML = `<label><input type="checkbox" class="bparty-checkbox" value="${party}" checked onchange="renderSmsTable()"> ${party}</label>`;
+          bContainer.appendChild(div);
+        });
+      }
+    }
+
+    function toggleSmsAll(type, masterBox) {
+      const checkboxes = document.querySelectorAll(`.${type}party-checkbox`);
+      checkboxes.forEach(cb => cb.checked = masterBox.checked);
+      renderSmsTable();
+    }
+
+    function makePartyCopyable(partyStr) {
+      if (!partyStr) return partyStr;
+      return partyStr.replace(/\b(01[3-9]\d{8})\b/g, function(num) {
+        return `<span class="party-link" onclick="navigator.clipboard.writeText('${num}'); alert('Number ${num} copied to clipboard!');" title="Click to copy number">${num} 📋</span>`;
+      });
+    }
+
+    function renderSmsTable() {
+      const tbody = document.getElementById('smsTableBody');
+      const searchInput = document.getElementById('smsSearchBox').value.toLowerCase();
+      tbody.innerHTML = "";
+
+      if (globalSmsData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;">No data available. Please upload files or paste SMS data.</td></tr>`;
+        return;
+      }
+
+      const selectedAs = Array.from(document.querySelectorAll('.aparty-checkbox:checked')).map(cb => cb.value);
+      const selectedBs = Array.from(document.querySelectorAll('.bparty-checkbox:checked')).map(cb => cb.value);
+
+      let groupedMap = {};
+      globalSmsData.forEach(item => {
+        let aKey = item.aParty ? item.aParty : "Unknown";
+        let bKey = item.bParty ? item.bParty : "Unknown";
+
+        if (selectedAs.length > 0 && !selectedAs.includes(aKey)) return;
+        if (selectedBs.length > 0 && !selectedBs.includes(bKey)) return;
+
+        let groupKey = aKey + " _to_ " + bKey;
+        if (!groupedMap[groupKey]) {
+          groupedMap[groupKey] = { aParty: aKey, bParty: bKey, messages: [] };
+        }
+        groupedMap[groupKey].messages.push(item);
+      });
+
+      let matchFound = false;
+      for (let groupKey in groupedMap) {
+        let group = groupedMap[groupKey];
+        group.messages.sort((a, b) => a.time.localeCompare(b.time));
+
+        let combinedTextMatch = group.messages.some(m => 
+          group.bParty.toLowerCase().includes(searchInput) || 
+          group.aParty.toLowerCase().includes(searchInput) || 
+          m.content.toLowerCase().includes(searchInput)
+        );
+
+        if (searchInput && !combinedTextMatch) continue;
+        matchFound = true;
+
+        let msgHtml = `<div class="msg-list">`;
+        group.messages.forEach((m, idx) => {
+          let cleanedContent = escapeHtml(m.content);
+          cleanedContent = processLinks(cleanedContent);
+          
+          if (/dwasa|wasa/i.test(cleanedContent)) {
+            cleanedContent = processWasaLinks(cleanedContent);
+          } else if (/dpdc/i.test(group.bParty) || /dpdc/i.test(cleanedContent)) {
+            cleanedContent = processDpdcLinks(cleanedContent);
+          } else if (/desco/i.test(cleanedContent)) {
+            cleanedContent = processDescoLinks(cleanedContent);
+          }
+
+          cleanedContent = processMfsNumbers(cleanedContent, group.bParty);
+          msgHtml += `<b>${idx + 1}.</b> ${cleanedContent} &nbsp; <i>(${m.time})</i> <span style="color:#38bdf8; font-weight:bold;">[${m.direction || 'SMS'}]</span><br>`;
+        });
+        msgHtml += `</div>`;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><b>${makePartyCopyable(group.aParty)}</b></td>
+          <td><b>${makePartyCopyable(group.bParty)}</b></td>
+          <td>${msgHtml}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+
+      if (!matchFound) {
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;">No matching records found for selected filters.</td></tr>`;
+      }
+    }
+
+    function processLinks(text) {
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
+      return text.replace(urlRegex, function(url) {
+        let label = "Tracking Link";
+        if (url.includes('ptho.app')) label = "Pathao Link";
+        else if (url.includes('steadfast.com.bd')) label = "Steadfast Link";
+        return `<a href="${url}" target="_blank" class="link-highlight">[🔗 ${label}: ${url}]</a>`;
+      });
+    }
+
+    function processWasaLinks(text) {
+      let match = text.match(/A\/c:\s*(\d{5,12})/i);
+      if (match) {
+        let accNo = match[1];
+        let wasaUrl = `https://consumer-portal.dhakawasa.org/index.php?type_name=member&page_name=acc_index&panel_index=1`;
+        return text + `<br><a href="#" onclick="navigator.clipboard.writeText('${accNo}'); window.open('${wasaUrl}', '_blank'); alert('Dhaka WASA Account No: ${accNo} copied to clipboard!'); return false;" class="utility-link">[💧 Dhaka WASA Portal (Copy Acc: ${accNo} & Open)]</a>`;
+      }
+      return text;
+    }
+
+    function processDpdcLinks(text) {
+      let match = text.match(/CN\s*[:\s]*(\d{6,12})/i) || text.match(/\b\d{6,12}\b/);
+      if (match && !text.includes('16116')) {
+        let cno = match[1] || match[0];
+        let dpdcUrl = `https://dpdc.org.bd/site/home_gov/check_vending_info?cno=${cno}&fromdate=01-10-2025&todate=28-10-2025&security_code=BysAv`;
+        return text + `<br><a href="#" onclick="navigator.clipboard.writeText('${cno}'); window.open('${dpdcUrl}', '_blank'); alert('DPDC Customer/Meter No: ${cno} copied to clipboard!'); return false;" class="dpdc-link">[⚡ DPDC Vending Info (Copy No: ${cno} & Open)]</a>`;
+      }
+      return text;
+    }
+
+    function processDescoLinks(text) {
+      let match = text.match(/\b\d{6,12}\b/);
+      if (match) {
+        let accNo = match[0];
+        let descoUrl = `https://prepaid.desco.org.bd/customer/#/customer-login`;
+        return text + `<br><a href="#" onclick="navigator.clipboard.writeText('${accNo}'); window.open('${descoUrl}', '_blank'); alert('DESCO Account/Meter No: ${accNo} copied to clipboard!'); return false;" class="desco-link">[💡 DESCO Portal (Copy Acc: ${accNo} & Open)]</a>`;
+      }
+      return text;
+    }
+
+    function processMfsNumbers(text, bParty) {
+      let isMfs = /bkash|nagod|rocket|mfs/i.test(bParty) || /bkash|nagod|rocket|a\/c|sender|trxid/i.test(text);
+      if (isMfs) {
+        return text.replace(/\b(01[3-9]\d{8})\b/g, function(num) {
+          return `<span class="mfs-link" onclick="navigator.clipboard.writeText('${num}'); alert('MFS Mobile Number: ${num} copied successfully!');" title="Click to copy MFS number">📱 [Copy MFS No: ${num}]</span>`;
+        });
+      } else {
+        return text.replace(/\b(01[3-9]\d{8})\b/g, function(num) {
+          return `<span class="party-link" onclick="navigator.clipboard.writeText('${num}'); alert('Number ${num} copied to clipboard!');" title="Click to copy">${num} 📋</span>`;
+        });
+      }
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    /* --- MFS Statement Analyser Module --- */
+    let allMfsAccountsData = {};
+    let mfsAccountProfiles = JSON.parse(localStorage.getItem('krish_mfs_profiles') || '{}');
+    let currentActiveMfsAccount = null;
+
+    function handleMfsFileUpload(event) {
+      const files = event.target.files;
+      if (!files.length) return;
+      const mfsType = document.getElementById('mfsSelect').value;
+      let filesProcessed = 0;
+
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        let fileName = file.name;
+        reader.onload = function(e) {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
+          parseAndStoreMfsRows(rows, mfsType, fileName);
+          filesProcessed++;
+          if (filesProcessed === files.length) {
+            updateMfsAccountToggleDropdown();
+            document.getElementById('mfsFile').value = '';
+            alert(`Successfully loaded ${files.length} MFS file(s) for ${mfsType}!`);
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    function parseAndStoreMfsRows(rows, mfsType, fileName) {
+      let detectedAccNo = "";
+      let transactions = [];
+
+      if (mfsType === 'Nagad') {
+        for (let i = 0; i < rows.length; i++) {
+          let cols = rows[i];
+          for (let c = 0; c < cols.length; c++) {
+            let val = String(cols[c] || '').trim();
+            if (val.startsWith("01") && val.length === 11 && !isNaN(val)) {
+              if (!detectedAccNo) detectedAccNo = val;
+            }
+          }
+        }
+
+        rows.forEach(cols => {
+          const txnId = cols[0] || cols[1] || '';
+          const txnDate = cols[1] || cols[2] || '';
+          const colD_Type = cols[3] || '';
+          const txnWithAcc = cols[5] || '';
+          const colI_DrCr = cols[8] || '';
+          const amount = cols[9] || '';
+
+          if (txnId && String(txnId).toLowerCase() !== 'transaction id' && !String(txnId).toLowerCase().includes('sl') && !String(txnId).toLowerCase().includes('transaction')) {
+            let drCrStr = String(colI_DrCr).toUpperCase().trim();
+            let bParty = String(txnWithAcc).trim();
+
+            if (bParty && bParty !== detectedAccNo && bParty.startsWith("01")) {
+              let sender = "";
+              let receiver = "";
+              
+              if (drCrStr.includes('DEBIT')) {
+                sender = detectedAccNo;
+                receiver = bParty;
+              } else if (drCrStr.includes('CREDIT')) {
+                sender = bParty;
+                receiver = detectedAccNo;
+              }
+
+              let combinedTxnType = `${colI_DrCr} ${colD_Type}`.trim();
+
+              if (sender && receiver) {
+                transactions.push({ 
+                  txnId: String(txnId), 
+                  txnDate: String(txnDate), 
+                  txnType: String(combinedTxnType), 
+                  sender, 
+                  receiver, 
+                  amount: String(amount), 
+                  fee: '' 
+                });
+              }
+            }
+          }
+        });
+      } else if (mfsType === 'bKash') {
+        for (let i = 0; i < Math.min(rows.length, 15); i++) {
+          let rowStr = rows[i].join(" ");
+          let foundNums = rowStr.match(/01\d{9}/g);
+          if (foundNums && foundNums.length > 0) {
+            detectedAccNo = foundNums[0];
+            break;
+          }
+        }
+        if (!detectedAccNo) {
+          let matchSuffix = fileName.match(/(\d{4})(?:\.[^.]+)?$/);
+          let fileSuffix = matchSuffix ? matchSuffix[1] : "";
+          detectedAccNo = fileSuffix ? "01XXXXXXXX" + fileSuffix : "ACC_" + Math.floor(Math.random() * 10000);
+        }
+
+        rows.forEach(cols => {
+          if (cols.length >= 7) {
+            const txnId = cols[1] || cols[0] || '';
+            const txnDate = cols[2] || cols[1] || '';
+            const txnType = String(cols[3] || cols[2] || '').trim();
+            const senderRaw = String(cols[4] || '').trim();
+            const receiverRaw = String(cols[5] || '').trim();
+            const amount = cols[6] || '';
+            const fee = cols[7] || '';
+
+            if (txnId && String(txnId).toLowerCase() !== 'transaction id' && !String(txnId).toLowerCase().includes('sl')) {
+              let s = senderRaw;
+              let r = receiverRaw;
+              
+              if (!s && r) s = detectedAccNo;
+              if (s && !r) r = detectedAccNo;
+
+              if (s && r) {
+                transactions.push({ txnId: String(txnId), txnDate: String(txnDate), txnType, sender: s, receiver: r, amount: String(amount), fee: String(fee) });
+              }
+            }
+          }
+        });
+      } else {
+        for (let i = 0; i < Math.min(rows.length, 15); i++) {
+          let rowStr = rows[i].join(" ");
+          let foundNums = rowStr.match(/01\d{9}/g);
+          if (foundNums && foundNums.length > 0) {
+            detectedAccNo = foundNums[0];
+            break;
+          }
+        }
+        if (!detectedAccNo) detectedAccNo = "01XXXXXXXXX";
+
+        rows.forEach(cols => {
+          if (cols.length >= 6) {
+            const txnId = cols[0] || '';
+            const txnDate = cols[1] || '';
+            const txnType = cols[2] || '';
+            const sender = cols[3] || '';
+            const receiver = cols[4] || '';
+            const amount = cols[5] || '';
+            if (txnId && String(txnId).toLowerCase() !== 'transaction id') {
+              transactions.push({ txnId: String(txnId), txnDate: String(txnDate), txnType: String(txnType), sender: String(sender), receiver: String(receiver), amount: String(amount), fee: '' });
+            }
+          }
+        });
+      }
+
+      if (!detectedAccNo) detectedAccNo = "01840304601";
+
+      if (transactions.length > 0) {
+        if (!allMfsAccountsData[detectedAccNo]) {
+          allMfsAccountsData[detectedAccNo] = { mfs: mfsType, transactions: [] };
+        }
+        allMfsAccountsData[detectedAccNo].transactions.push(...transactions);
+        currentActiveMfsAccount = detectedAccNo;
+      }
+    }
+
+    function classifyAccountType(txnsList, number) {
+      if (number && number.length === 12 && number.includes('-')) {
+        return "Personal";
+      }
+
+      let hasSendMoneyOrP2P = false;
+      let hasCashInOutOrPayment = false;
+
+      for (let t of txnsList) {
+        let typeLower = (t.txnType || "").toLowerCase();
+        if (typeLower.includes('send money') || typeLower.includes('p2p') || typeLower.includes('fund transfer')) {
+          hasSendMoneyOrP2P = true;
+        }
+        if (typeLower.includes('cash in') || typeLower.includes('cash out') || typeLower.includes('cash-in') || typeLower.includes('cash-out') || typeLower.includes('payment')) {
+          hasCashInOutOrPayment = true;
+        }
+      }
+
+      if (hasSendMoneyOrP2P) {
+        return "Personal";
+      } else if (hasCashInOutOrPayment && !hasSendMoneyOrP2P) {
+        return "Agent";
+      }
+
+      return "Personal";
+    }
+
+    function updateMfsAccountToggleDropdown() {
+      const select = document.getElementById('activeAccountToggle');
+      let previouslySelected = currentActiveMfsAccount;
+      select.innerHTML = '';
+      
+      Object.keys(allMfsAccountsData).forEach(accNo => {
+        let opt = document.createElement('option');
+        opt.value = accNo;
+        opt.textContent = `${allMfsAccountsData[accNo].mfs} (${accNo})`;
+        if (accNo === previouslySelected) opt.selected = true;
+        select.appendChild(opt);
+      });
+
+      if (currentActiveMfsAccount && allMfsAccountsData[currentActiveMfsAccount]) {
+        select.value = currentActiveMfsAccount;
+        loadMfsAccountData(currentActiveMfsAccount);
+      } else if (Object.keys(allMfsAccountsData).length > 0) {
+        currentActiveMfsAccount = Object.keys(allMfsAccountsData)[0];
+        select.value = currentActiveMfsAccount;
+        loadMfsAccountData(currentActiveMfsAccount);
+      }
+    }
+
+    function switchActiveAccount() {
+      currentActiveMfsAccount = document.getElementById('activeAccountToggle').value;
+      if (currentActiveMfsAccount) loadMfsAccountData(currentActiveMfsAccount);
+    }
+
+    function loadMfsAccountData(accNo) {
+      const accData = allMfsAccountsData[accNo];
+      if (!accData) return;
+
+      document.getElementById('lblAccNumber').textContent = accNo;
+      document.getElementById('lblMfsProvider').textContent = accData.mfs;
+
+      let accHolderType = classifyAccountType(accData.transactions, accNo);
+      let accTypeBadge = document.getElementById('lblAccType');
+      accTypeBadge.textContent = accHolderType;
+      if (accHolderType === 'Agent') {
+        accTypeBadge.className = "px-2 py-0.5 rounded border text-[10px] font-bold bg-amber-950 text-amber-300 border-amber-700";
+      } else {
+        accTypeBadge.className = "px-2 py-0.5 rounded border text-[10px] font-bold bg-emerald-950 text-emerald-300 border-emerald-700";
+      }
+
+      let profile = mfsAccountProfiles[accNo] || { text: "", pic: "" };
+      document.getElementById('accHolderDetails').value = profile.text;
+      renderMfsProfilePic('acc', profile.pic);
+
+      let agentMap = {};
+      let personalMap = {};
+      let undefinedMap = {};
+
+      accData.transactions.forEach(t => {
+        let cp = (t.sender === accNo) ? t.receiver : t.sender;
+        if (cp && cp !== accNo && cp.startsWith("01")) {
+          let cpTxns = accData.transactions.filter(x => x.sender === cp || x.receiver === cp);
+          let cpType = classifyAccountType(cpTxns, cp);
+
+          if (cpType === 'Agent') {
+            agentMap[cp] = (agentMap[cp] || 0) + 1;
+          } else if (cpType === 'Personal') {
+            personalMap[cp] = (personalMap[cp] || 0) + 1;
+          } else {
+            undefinedMap[cp] = (undefinedMap[cp] || 0) + 1;
+          }
+        }
+      });
+
+      let formatMapToString = (mapObj) => {
+        let list = [];
+        for (let [num, cnt] of Object.entries(mapObj)) {
+          list.push(`${num} (${cnt})`);
+        }
+        return list.length > 0 ? list.join(', ') : "None";
+      };
+
+      let summaryHtml = `Agent: ${formatMapToString(agentMap)}<br>` +
+                        `Personal: ${formatMapToString(personalMap)}<br>` +
+                        `Undefined: ${formatMapToString(undefinedMap)}`;
+      
+      document.getElementById('lblTotalTxnSummary').innerHTML = summaryHtml;
+
+      let txnTypes = new Set();
+      accData.transactions.forEach(t => txnTypes.add(t.txnType));
+      const summaryToggle = document.getElementById('summaryTypeToggle');
+      summaryToggle.innerHTML = '<option value="ALL">-- Select Txn Type --</option>';
+      txnTypes.forEach(type => {
+        let opt = document.createElement('option');
+        opt.value = type;
+        opt.textContent = type;
+        summaryToggle.appendChild(opt);
+      });
+      document.getElementById('typeSummaryBox').classList.add('hidden');
+
+      renderMfsTables(accData.transactions, accNo);
+    }
+
+    function renderMfsTables(transactions, accNo) {
+      const sendBody = document.getElementById('sendTableBody');
+      const receiveBody = document.getElementById('receiveTableBody');
+      sendBody.innerHTML = '';
+      receiveBody.innerHTML = '';
+
+      let outgoingMap = {}, incomingMap = {};
+
+      transactions.forEach(t => {
+        if (t.sender === accNo) {
+          let bParty = t.receiver;
+          if (bParty && bParty !== accNo) {
+            if (!outgoingMap[bParty]) outgoingMap[bParty] = [];
+            outgoingMap[bParty].push(t);
+          }
+        } else if (t.receiver === accNo) {
+          let bParty = t.sender;
+          if (bParty && bParty !== accNo) {
+            if (!incomingMap[bParty]) incomingMap[bParty] = [];
+            incomingMap[bParty].push(t);
+          }
+        }
+      });
+
+      const sortTxns = (txns) => {
+        return txns.sort((a, b) => new Date(a.txnDate) - new Date(b.txnDate));
+      };
+
+      let sendHTML = '';
+      for (let [recvNum, txns] of Object.entries(outgoingMap)) {
+        let sortedTxns = sortTxns(txns);
+        let classificationType = classifyAccountType(sortedTxns, recvNum);
+        let badgeColor = classificationType === 'Agent' ? 'bg-amber-950 text-amber-300 border-amber-700' : 'bg-emerald-950 text-emerald-300 border-emerald-700';
+
+        let prof = mfsAccountProfiles[recvNum] || { text: "", pic: "" };
+        let imgTagHtml = prof.pic ? `<img src="${prof.pic}" class="w-full h-full object-cover">` : `<span class="text-[8px] text-slate-400">No Pic</span>`;
+        
+        let details = sortedTxns.map((t, idx) => `
+          <div style="margin-bottom:4px; padding-bottom:4px; border-bottom:1px solid var(--border); font-family:monospace; font-size:10px;">
+            <span style="font-weight:bold; color:#cbd5e1;">#${idx + 1}</span> | Type: <span style="color:#38bdf8; font-weight:bold;">[${t.txnType}]</span> | Amount: <b style="color:#34d399;">${t.amount} BDT</b><br>
+            <span style="color:#9ca3af;">Date: ${t.txnDate} | ID: ${t.txnId}</span>
+          </div>
+        `).join('');
+
+        if (sortedTxns.length > 1) {
+          let totalAmt = sortedTxns.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+          details += `
+            <div style="margin-top:6px; padding:4px; border-top:1px solid #1e3a8a; font-family:monospace; font-size:10px; font-weight:bold; color:#93c5fd; background:#172554; border-radius:4px;">
+              Total: ${sortedTxns.length} txns | Amount: ${totalAmt} BDT
+            </div>
+          `;
+        }
+        
+        sendHTML += `
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:10px; border-right:1px solid var(--border); font-weight:bold; color:#38bdf8; vertical-align:top;">${accNo}</td>
+            <td style="padding:10px; border-right:1px solid var(--border); vertical-align:top;">
+              <div style="font-weight:bold; color:#818cf8; margin-bottom:4px; display:flex; align-items:center; justify-content:space-between; gap:6px;">
+                <span>${recvNum}</span>
+                <span style="font-size:9px; padding:2px 4px; border-radius:4px; border:1px solid; font-weight:bold;" class="${badgeColor}">${classificationType}</span>
+              </div>
+              <textarea rows="2" onchange="saveCounterpartyProfileText('${recvNum}', this.value)" style="width:100%; border:1px solid var(--border); border-radius:6px; padding:4px; font-size:10px; background:#0b0f19; color:#ffffff; margin-bottom:6px;" placeholder="Enter Name/Details...">${prof.text}</textarea>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <div id="pic_${recvNum}" style="width:40px; height:40px; border:1px solid var(--border); border-radius:6px; background:#0b0f19; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                  ${imgTagHtml}
+                </div>
+                <div class="no-print" style="display:flex; flex-direction:column; gap:2px;">
+                  <input type="file" accept="image/*" onchange="uploadCounterpartyPic(event, '${recvNum}')" style="display:none;" id="file_${recvNum}">
+                  <button onclick="document.getElementById('file_${recvNum}').click()" class="btn btn-info" style="padding:2px 4px; font-size:8px; margin:0;">Upload</button>
+                  ${prof.pic ? `<button onclick="downloadPic('${prof.pic}', '${recvNum}_nid.png')" class="btn btn-success" style="padding:2px 4px; font-size:8px; margin:0;">Download</button>` : ''}
+                </div>
+              </div>
+            </td>
+            <td style="padding:10px; vertical-align:top;">${details}</td>
+          </tr>
+        `;
+      }
+      sendBody.innerHTML = sendHTML || `<tr><td colspan="3" style="padding:12px; text-align:center; color:#9ca3af;">No outgoing data.</td></tr>`;
+
+      let recvHTML = '';
+      for (let [sndNum, txns] of Object.entries(incomingMap)) {
+        let sortedTxns = sortTxns(txns);
+        let classificationType = classifyAccountType(sortedTxns, sndNum);
+        let badgeColor = classificationType === 'Agent' ? 'bg-amber-950 text-amber-300 border-amber-700' : 'bg-emerald-950 text-emerald-300 border-emerald-700';
+
+        let prof = mfsAccountProfiles[sndNum] || { text: "", pic: "" };
+        let imgTagHtml = prof.pic ? `<img src="${prof.pic}" class="w-full h-full object-cover">` : `<span class="text-[8px] text-slate-400">No Pic</span>`;
+        
+        let details = sortedTxns.map((t, idx) => `
+          <div style="margin-bottom:4px; padding-bottom:4px; border-bottom:1px solid var(--border); font-family:monospace; font-size:10px;">
+            <span style="font-weight:bold; color:#cbd5e1;">#${idx + 1}</span> | Type: <span style="color:#38bdf8; font-weight:bold;">[${t.txnType}]</span> | Amount: <b style="color:#34d399;">${t.amount} BDT</b><br>
+            <span style="color:#9ca3af;">Date: ${t.txnDate} | ID: ${t.txnId}</span>
+          </div>
+        `).join('');
+
+        if (sortedTxns.length > 1) {
+          let totalAmt = sortedTxns.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+          details += `
+            <div style="margin-top:6px; padding:4px; border-top:1px solid #1e3a8a; font-family:monospace; font-size:10px; font-weight:bold; color:#93c5fd; background:#172554; border-radius:4px;">
+              Total: ${sortedTxns.length} txns | Amount: ${totalAmt} BDT
+            </div>
+          `;
+        }
+        
+        recvHTML += `
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:10px; border-right:1px solid var(--border); font-weight:bold; color:#38bdf8; vertical-align:top;">${accNo}</td>
+            <td style="padding:10px; border-right:1px solid var(--border); vertical-align:top;">
+              <div style="font-weight:bold; color:#818cf8; margin-bottom:4px; display:flex; align-items:center; justify-content:space-between; gap:6px;">
+                <span>${sndNum}</span>
+                <span style="font-size:9px; padding:2px 4px; border-radius:4px; border:1px solid; font-weight:bold;" class="${badgeColor}">${classificationType}</span>
+              </div>
+              <textarea rows="2" onchange="saveCounterpartyProfileText('${sndNum}', this.value)" style="width:100%; border:1px solid var(--border); border-radius:6px; padding:4px; font-size:10px; background:#0b0f19; color:#ffffff; margin-bottom:6px;" placeholder="Enter Name/Details...">${prof.text}</textarea>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <div id="pic_${sndNum}" style="width:40px; height:40px; border:1px solid var(--border); border-radius:6px; background:#0b0f19; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                  ${imgTagHtml}
+                </div>
+                <div class="no-print" style="display:flex; flex-direction:column; gap:2px;">
+                  <input type="file" accept="image/*" onchange="uploadCounterpartyPic(event, '${sndNum}')" style="display:none;" id="file_${sndNum}">
+                  <button onclick="document.getElementById('file_${sndNum}').click()" class="btn btn-info" style="padding:2px 4px; font-size:8px; margin:0;">Upload</button>
+                  ${prof.pic ? `<button onclick="downloadPic('${prof.pic}', '${sndNum}_nid.png')" class="btn btn-success" style="padding:2px 4px; font-size:8px; margin:0;">Download</button>` : ''}
+                </div>
+              </div>
+            </td>
+            <td style="padding:10px; vertical-align:top;">${details}</td>
+          </tr>
+        `;
+      }
+      receiveBody.innerHTML = recvHTML || `<tr><td colspan="3" style="padding:12px; text-align:center; color:#9ca3af;">No incoming data.</td></tr>`;
+    }
+
+    function updateTypeSummaryView() {
+      let selectedType = document.getElementById('summaryTypeToggle').value;
+      let summaryBox = document.getElementById('typeSummaryBox');
+      let contentBox = document.getElementById('typeSummaryContent');
+
+      if (selectedType === 'ALL' || !currentActiveMfsAccount) {
+        summaryBox.classList.add('hidden');
+        return;
+      }
+
+      let txns = allMfsAccountsData[currentActiveMfsAccount].transactions.filter(t => t.txnType === selectedType);
+      let counterpartyCounts = {};
+
+      txns.forEach(t => {
+        let cp = (t.sender === currentActiveMfsAccount) ? t.receiver : t.sender;
+        if (!counterpartyCounts[cp]) counterpartyCounts[cp] = { count: 0, totalAmount: 0 };
+        counterpartyCounts[cp].count += 1;
+        counterpartyCounts[cp].totalAmount += parseFloat(t.amount || 0);
+      });
+
+      let highestCP = Object.keys(counterpartyCounts).reduce((a, b) => counterpartyCounts[a].count > counterpartyCounts[b].count ? a : b, null);
+
+      let html = `Selected Transaction Type: <b>${selectedType}</b><br>`;
+      html += `Total Transactions of this type: <b>${txns.length}</b><br>`;
+      if (highestCP) {
+        html += `Highest Frequency Number/Entity: <b style="color:#38bdf8;">${highestCP}</b> (Total Count: ${counterpartyCounts[highestCP].count} times, Total Amount: ${counterpartyCounts[highestCP].totalAmount} BDT)<br>`;
+      }
+      html += `<hr style="border-color:#1e3a8a; margin:6px 0;">Detailed Breakdown per Number:<br>`;
+      for (let [num, data] of Object.entries(counterpartyCounts)) {
+        html += `- Number: <b>${num}</b> | Count: ${data.count} times | Total Amount: ${data.totalAmount} BDT<br>`;
+      }
+
+      contentBox.innerHTML = html;
+      summaryBox.classList.remove('hidden');
+    }
+
+    function saveAccountProfile() {
+      if (!currentActiveMfsAccount) return;
+      if (!mfsAccountProfiles[currentActiveMfsAccount]) mfsAccountProfiles[currentActiveMfsAccount] = { text: "", pic: "" };
+      mfsAccountProfiles[currentActiveMfsAccount].text = document.getElementById('accHolderDetails').value;
+      localStorage.setItem('krish_mfs_profiles', JSON.stringify(mfsAccountProfiles));
+    }
+
+    function uploadProfilePic(event, key) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        let base64 = e.target.result;
+        if (!mfsAccountProfiles[currentActiveMfsAccount]) mfsAccountProfiles[currentActiveMfsAccount] = { text: "", pic: "" };
+        mfsAccountProfiles[currentActiveMfsAccount].pic = base64;
+        localStorage.setItem('krish_mfs_profiles', JSON.stringify(mfsAccountProfiles));
+        renderMfsProfilePic('acc', base64);
+        loadMfsAccountData(currentActiveMfsAccount);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function renderMfsProfilePic(type, base64) {
+      let container = document.getElementById('accHolderPicContainer');
+      let downloadBtn = document.getElementById('accDownloadBtn');
+      if (base64) {
+        container.innerHTML = `<img src="${base64}" class="w-full h-full object-cover">`;
+        downloadBtn.style.display = 'block';
+        downloadBtn.onclick = () => downloadPic(base64, `${currentActiveMfsAccount}_profile.png`);
+      } else {
+        container.innerHTML = `<span style="font-size:9px; color:#9ca3af; text-align:center;">No Pic</span>`;
+        downloadBtn.style.display = 'none';
+      }
+    }
+
+    function saveCounterpartyProfileText(num, val) {
+      if (!mfsAccountProfiles[num]) mfsAccountProfiles[num] = { text: "", pic: "" };
+      mfsAccountProfiles[num].text = val;
+      localStorage.setItem('krish_mfs_profiles', JSON.stringify(mfsAccountProfiles));
+    }
+
+    function uploadCounterpartyPic(event, num) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        let base64 = e.target.result;
+        if (!mfsAccountProfiles[num]) mfsAccountProfiles[num] = { text: "", pic: "" };
+        mfsAccountProfiles[num].pic = base64;
+        localStorage.setItem('krish_mfs_profiles', JSON.stringify(mfsAccountProfiles));
+        loadMfsAccountData(currentActiveMfsAccount);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function downloadPic(base64, filename) {
+      let a = document.createElement('a');
+      a.href = base64;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    function openCommonAnalysisModal() {
+      const modal = document.getElementById('commonModal');
+      const content = document.getElementById('commonModalContent');
+      modal.classList.remove('hidden');
+
+      let accountList = Object.keys(allMfsAccountsData);
+      if (accountList.length < 2) {
+        content.innerHTML = `<p class="text-center text-slate-400 py-4">At least 2 statements required for common analysis.</p>`;
+        return;
+      }
+
+      let numberOccurrences = {};
+      accountList.forEach(accNo => {
+        allMfsAccountsData[accNo].transactions.forEach(t => {
+          let cp = (t.sender === accNo) ? t.receiver : t.sender;
+          if (cp && cp.length >= 10 && !allMfsAccountsData[cp]) {
+            if (!numberOccurrences[cp]) numberOccurrences[cp] = [];
+            let exists = numberOccurrences[cp].some(r => r.account === accNo);
+            if (!exists) {
+              numberOccurrences[cp].push({ account: accNo, mfs: allMfsAccountsData[accNo].mfs, type: t.txnType, amount: t.amount, date: t.txnDate });
+            }
+          }
+        });
+      });
+
+      let html = `<table style="width:100%; border-collapse:collapse; border:1px solid var(--border);"><thead><tr style="background:#111827; color:#ffffff;"><th style="padding:6px; border:1px solid var(--border);">Number</th><th style="padding:6px; border:1px solid var(--border);">Accounts & MFS</th><th style="padding:6px; border:1px solid var(--border);">Transaction History</th></tr></thead><tbody>`;
+      let found = false;
+
+      for (let [num, recs] of Object.entries(numberOccurrences)) {
+        let uniqAccs = [...new Set(recs.map(r => r.account))];
+        if (uniqAccs.length > 1) {
+          found = true;
+          html += `<tr>
+            <td style="padding:6px; border:1px solid var(--border); font-weight:bold; color:#38bdf8; vertical-align:top;">${num}</td>
+            <td style="padding:6px; border:1px solid var(--border); vertical-align:top;">${uniqAccs.map(a => `${a} (${allMfsAccountsData[a].mfs})`).join(', ')}</td>
+            <td style="padding:6px; border:1px solid var(--border); font-family:monospace; vertical-align:top;">Total Accounts: ${uniqAccs.length}<br>` + 
+            recs.map(r => `[${r.mfs} - Acc: ${r.account}] ${r.type} - ${r.amount} BDT (${r.date})`).join('<br>') + 
+            `</td></tr>`;
+        }
+      }
+      html += `</tbody></table>`;
+      content.innerHTML = found ? html : `<p class="text-center text-slate-400 py-4">No common numbers found.</p>`;
+    }
+
+    function closeCommonAnalysisModal() { document.getElementById('commonModal').classList.add('hidden'); }
+
+    function applyMfsFilters() {
+      if (!currentActiveMfsAccount) return;
+      let search = document.getElementById('searchNumber').value.trim();
+      let txns = allMfsAccountsData[currentActiveMfsAccount].transactions.filter(t => search === '' || t.sender.includes(search) || t.receiver.includes(search));
+      renderMfsTables(txns, currentActiveMfsAccount);
+    }
+
+    function exportAllProfiles() {
+      let blob = new Blob([JSON.stringify(mfsAccountProfiles, null, 2)], { type: 'application/json' });
+      let url = URL.createObjectURL(blob);
+      let a = document.createElement('a');
+      a.href = url;
+      a.download = 'krish_mfs_profiles_backup.json';
+      a.click();
+    }
+  </script>
+</body>
+</html>
