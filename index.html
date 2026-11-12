@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Forensic Suite - Master Intelligence Edition</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -191,6 +192,7 @@
           <button onclick="openModule('sms')" style="width: 100%; text-align: left; padding: 12px; border-radius: 10px; border: none; background: transparent; color: #9ca3af; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: background 0.2s;"><i class="fa-solid fa-comment-sms text-emerald-400"></i> SMS Analyser</button>
           <button onclick="openModule('mfs')" style="width: 100%; text-align: left; padding: 12px; border-radius: 10px; border: none; background: transparent; color: #9ca3af; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: background 0.2s;"><i class="fa-solid fa-wallet text-amber-400"></i> MFS Analyser</button>
           <button onclick="openModule('bts')" style="width: 100%; text-align: left; padding: 12px; border-radius: 10px; border: none; background: transparent; color: #9ca3af; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: background 0.2s;"><i class="fa-solid fa-location-dot text-rose-400"></i> BTS Analyser</button>
+          <button onclick="openModule('towerdump')" style="width: 100%; text-align: left; padding: 12px; border-radius: 10px; border: none; background: transparent; color: #9ca3af; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: background 0.2s;"><i class="fa-solid fa-tower-broadcast text-purple-400"></i> Tower Dump</button>
           <button onclick="openModule('guide')" style="width: 100%; text-align: left; padding: 12px; border-radius: 10px; border: none; background: transparent; color: #9ca3af; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: background 0.2s;"><i class="fa-solid fa-book text-teal-400"></i> User Guide</button>
         </div>
 
@@ -253,6 +255,14 @@
                 <p style="font-size: 12px; color: #9ca3af; line-height: 1.5;">Search BTS locations, view Azimuth sectors, and track multi-target paths.</p>
               </div>
               <div style="margin-top: 15px; font-weight: 700; color: #60a5fa; font-size: 12px; display:flex; justify-content:space-between; align-items:center;">Launch Module <i class="fa-solid fa-arrow-right"></i></div>
+            </div>
+
+            <div class="module-card" onclick="openModule('towerdump')" style="--primary:#8b5cf6; --secondary:#c084fc;">
+              <div>
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;"><div style="width:40px; height:40px; border-radius:10px; background:rgba(139,92,246,0.2); display:flex; align-items:center; justify-content:center;"><i class="fa-solid fa-tower-broadcast text-purple-400 text-lg"></i></div><h3>Tower Dump</h3></div>
+                <p style="font-size: 12px; color: #9ca3af; line-height: 1.5;">Load multiple tower dumps, map columns, split by time, and find common A-party/B-party/IMEI.</p>
+              </div>
+              <div style="margin-top: 15px; font-weight: 700; color: #c084fc; font-size: 12px; display:flex; justify-content:space-between; align-items:center;">Launch Module <i class="fa-solid fa-arrow-right"></i></div>
             </div>
 
             <div class="module-card" onclick="openModule('guide')" style="--primary:#14b8a6; --secondary:#2dd4bf;">
@@ -731,6 +741,196 @@
         <div id="btsMapContainer" style="display: none; background: rgba(31, 41, 55, 0.5); padding: 20px; border-radius: 16px; border-top: 4px solid var(--accent);"><h3 style="margin-top: 0; color: var(--accent); margin-bottom: 20px; font-size:18px;">🗺️ Combined Route & Distance Map</h3><div id="bts-map"></div></div>
       </div>
 
+      <!-- TOWER DUMP MODULE -->
+      <div class="container-box" id="towerDumpAnalyzerModuleContainer">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+              <button class="btn btn-secondary" style="width:auto; padding:8px 16px; font-size:12px;" onclick="openModule('home')"><i class="fa-solid fa-arrow-left"></i> Back to Modules</button>
+              <button class="btn btn-danger" style="width:auto; padding:8px 16px; font-size:12px;" onclick="resetTowerDumpSession()"><i class="fa-solid fa-xmark"></i> Reset Session</button>
+          </div>
+          <h1>Tower Dump Analyser</h1>
+          <div class="subtitle">Session-based Location Grouping, Auto Time-Split, and Operator Filter.</div>
+          
+          <div class="tabs-header-wrapper" style="margin-top:20px;">
+              <div class="tabs">
+                  <button class="tab-btn active" onclick="switchTdTab('load', this)">1. Load Data</button>
+                  <button class="tab-btn" onclick="switchTdTab('compare', this)">2. Compare Data</button>
+              </div>
+          </div>
+
+          <!-- Tab 1: Load Data -->
+          <div id="td-tab-load" class="tab-content active" style="padding:20px;">
+              <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
+                  <button class="btn btn-td" onclick="document.getElementById('tdFileInput').click()" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; padding: 10px 20px; font-size: 14px; border-radius: 10px;"><i class="fa-solid fa-plus"></i> Add File</button>
+                  <input type="file" id="tdFileInput" multiple accept=".csv, .xlsx, .xls" style="display: none;" onchange="handleTdFileSelect(event)">
+                  <span style="font-size: 13px; color: var(--text-muted);">Add multiple CSV/Excel files.</span>
+              </div>
+              
+              <div id="tdFileQueue" style="margin-top: 10px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; max-height: 200px; overflow-y: auto; background: rgba(11,15,25,0.6);">
+                  <div style="padding: 15px; text-align: center; color: #9ca3af;">No files added yet.</div>
+              </div>
+
+              <div id="tdMappingArea" style="display: none; background: rgba(11,15,25,0.8); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); margin-top: 15px;">
+                  <h4 style="margin-bottom: 15px; color: #a78bfa;">Column Mapping for: <span id="tdCurrentMapFile"></span></h4>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                      <div>
+                          <label style="color:#93c5fd;">Group Name (Location / Time)</label>
+                          <input type="text" id="tdMapLocation" class="form-control" list="tdLocationSuggestions" placeholder="e.g. মাজার বস্তি" style="background: rgba(11,15,25,0.6); color:white; border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; width: 100%;">
+                          <datalist id="tdLocationSuggestions"></datalist>
+                      </div>
+                      <div>
+                          <label style="color:#93c5fd;">Auto Time Split</label>
+                          <select id="tdAutoTimeSplit" class="form-control" style="background: rgba(11,15,25,0.6); color:white; border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; width: 100%;">
+                              <option value="none">No Split</option>
+                              <option value="1">Split Every 1 Minute</option>
+                              <option value="5">Split Every 5 Minutes</option>
+                              <option value="10">Split Every 10 Minutes</option>
+                              <option value="15">Split Every 15 Minutes</option>
+                              <option value="30">Split Every 30 Minutes</option>
+                              <option value="60">Split Every 1 Hour</option>
+                          </select>
+                      </div>
+                  </div>
+                  <div id="tdColumnSelectors" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;"></div>
+                  <button class="btn btn-success" style="margin-top: 15px; width: 100%; justify-content: center; padding: 12px;" onclick="confirmTdMapping()"><i class="fa-solid fa-check"></i> Confirm Mapping & Process File</button>
+              </div>
+
+              <div class="loader" id="tdLoadLoader" style="display: none; text-align: center; padding: 20px;">
+                  <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 30px; color: #8b5cf6;"></i>
+                  <p style="margin-top: 10px; color: #9ca3af;">Processing...</p>
+              </div>
+
+              <div style="margin-top: 15px;">
+                  <h4 style="font-size: 14px; color: #10b981;">Loaded Groups in Session:</h4>
+                  <ul id="tdLoadedList" style="font-size: 13px; color: #9ca3af; padding-left: 20px; margin-top: 5px;"></ul>
+              </div>
+          </div>
+
+          <!-- Tab 2: Compare Data -->
+          <div id="td-tab-compare" class="tab-content" style="padding:20px;">
+              <div style="background: rgba(11,15,25,0.8); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px;">
+                  <h4 style="color: #a78bfa; margin-bottom: 15px;"><i class="fa-solid fa-sliders"></i> Comparison Setup</h4>
+                  
+                  <div style="margin-bottom: 15px;">
+                      <label>Number Type Filter</label>
+                      <div style="display:flex; gap:15px; background: rgba(17,24,39,0.8); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                          <label style="display:flex; align-items:center; gap:5px; font-size:13px; color:#f3f4f6; cursor:pointer;"><input type="radio" name="tdNumType" value="original" checked style="width:auto;"> Original / Local (BD Mobile)</label>
+                          <label style="display:flex; align-items:center; gap:5px; font-size:13px; color:#f3f4f6; cursor:pointer;"><input type="radio" name="tdNumType" value="ip" style="width:auto;"> IP Number (VoIP)</label>
+                          <label style="display:flex; align-items:center; gap:5px; font-size:13px; color:#f3f4f6; cursor:pointer;"><input type="radio" name="tdNumType" value="foreign" style="width:auto;"> Foreign Number</label>
+                      </div>
+                  </div>
+
+                  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                      <div>
+                          <label>Compare Field</label>
+                          <select id="tdCompareTarget" class="form-control" style="background: rgba(11,15,25,0.6); color:white; border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; width: 100%;">
+                              <option value="a_party">A-Party</option>
+                              <option value="b_party">B-Party</option>
+                              <option value="imei">IMEI</option>
+                          </select>
+                      </div>
+                      <div>
+                          <label>Operator Filter</label>
+                          <select id="tdOperatorFilter" class="form-control" style="background: rgba(11,15,25,0.6); color:white; border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; width: 100%;">
+                              <option value="all">All Operators</option>
+                              <option value="gp">GP Only</option>
+                              <option value="robi">Robi Only</option>
+                              <option value="bl">Banglalink Only</option>
+                              <option value="gp_robi">GP & Robi</option>
+                              <option value="gp_bl">GP & Banglalink</option>
+                              <option value="robi_bl">Robi & Banglalink</option>
+                          </select>
+                      </div>
+                      <div>
+                          <label>Comparison Mode</label>
+                          <select id="tdCompareMode" class="form-control" style="background: rgba(11,15,25,0.6); color:white; border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; width: 100%;" onchange="toggleTdCompareMode()">
+                              <option value="INTERSECTION_ALL">Intersection (All groups)</option>
+                              <option value="AT_LEAST_K">At least K groups</option>
+                              <option value="PAIRWISE">Pairwise (2 groups)</option>
+                          </select>
+                      </div>
+                  </div>
+                  
+                  <div id="tdKGroup" style="display: none; margin-bottom: 15px;">
+                      <label>K Value</label>
+                      <input type="number" id="tdKValue" class="form-control" value="2" min="1" style="background: rgba(11,15,25,0.6); color:white; border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; width: 100px;">
+                  </div>
+
+                  <div style="background: rgba(59, 130, 246, 0.05); padding: 15px; border-radius: 8px; border: 1px solid #3b82f6; margin-bottom: 15px;">
+                      <label style="color: #60a5fa; font-weight: 600;">Date/Time Range Filter (Optional)</label>
+                      <div style="display: flex; gap: 10px; align-items: center;">
+                          <div style="flex: 1;">
+                              <label style="font-size: 11px;">From</label>
+                              <input type="datetime-local" id="tdFilterFromDate" class="form-control" step="1" style="background: rgba(11,15,25,0.6); color:white; border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; width: 100%;">
+                          </div>
+                          <div style="flex: 1;">
+                              <label style="font-size: 11px;">To</label>
+                              <input type="datetime-local" id="tdFilterToDate" class="form-control" step="1" style="background: rgba(11,15,25,0.6); color:white; border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; width: 100%;">
+                          </div>
+                          <button class="btn btn-primary" style="margin-top: 15px; padding: 10px;" onclick="clearTdDateTimeFilter()">Clear</button>
+                      </div>
+                  </div>
+
+                  <div id="tdMultiSelectGroup">
+                      <label>Select Groups to compare:</label>
+                      <div id="tdCompareCheckboxes" style="display: flex; flex-wrap: wrap; gap: 10px; padding: 10px; background: rgba(17,24,39,0.8); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); max-height: 150px; overflow-y: auto;"></div>
+                  </div>
+
+                  <div id="tdPairwiseGroup" style="display: none; background: rgba(17,24,39,0.8); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); margin-top: 15px;">
+                      <label style="color: #f59e0b; margin-bottom: 10px;">Which group should be compared with which?</label>
+                      <div style="display: flex; gap: 15px; align-items: center;">
+                          <div style="flex: 1;">
+                              <label>Group A</label>
+                              <select id="tdPairwiseA" class="form-control" style="background: rgba(11,15,25,0.6); color:white; border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; width: 100%;"></select>
+                          </div>
+                          <div style="color: #8b5cf6; font-size: 20px; padding-top: 15px;"><i class="fa-solid fa-right-left"></i></div>
+                          <div style="flex: 1;">
+                              <label>Group B</label>
+                              <select id="tdPairwiseB" class="form-control" style="background: rgba(11,15,25,0.6); color:white; border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; width: 100%;"></select>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+
+              <button class="btn btn-td" onclick="runTdComparison()" style="justify-content: center; padding: 12px; font-size: 16px; width: 100%; margin-bottom: 15px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; border-radius: 10px;"><i class="fa-solid fa-microchip"></i> Run Comparison</button>
+
+              <div class="loader" id="tdCompareLoader" style="display: none; text-align: center; padding: 20px;">
+                  <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 30px; color: #8b5cf6;"></i>
+                  <p style="margin-top: 10px; color: #9ca3af;">Processing data in background...</p>
+              </div>
+
+              <div id="tdResultsArea" style="display: none; flex-direction: column; flex: 1; min-height: 300px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                      <h4 style="color: #10b981;">Results (Click on number for Tower Details)</h4>
+                      <button class="btn btn-success" onclick="exportTdResults()"><i class="fa-solid fa-download"></i> Export to CSV</button>
+                  </div>
+                  <div style="overflow-y: auto; flex: 1; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;">
+                      <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                          <thead id="tdResultHead"></thead>
+                          <tbody id="tdResultBody"></tbody>
+                      </table>
+                  </div>
+              </div>
+          </div>
+      </div>
+
+      <!-- TD Details Modal -->
+      <div class="modal-overlay" id="tdDetailsModal" style="z-index: 1100; display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); backdrop-filter: blur(5px); justify-content:center; align-items:center;">
+          <div style="background: #111827; width: 95%; max-width: 1000px; border-radius: 12px; padding: 25px; border: 1px solid rgba(255,255,255,0.1); height: 90vh; display: flex; flex-direction: column; overflow: hidden;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                  <h2 style="font-size: 22px; color: #a78bfa;"><i class="fa-solid fa-list-ul"></i> Tracking Details: <span id="tdDetailTargetNum" style="font-family: monospace; color: white;"></span></h2>
+                  <button style="background: none; border: none; color: #9ca3af; font-size: 22px; cursor: pointer;" onclick="document.getElementById('tdDetailsModal').style.display='none'"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+              <div style="overflow-y: auto; flex: 1; padding-right: 5px;">
+                  <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                      <thead style="background: #1f2937; color: #a78bfa; position: sticky; top: 0;">
+                          <tr><th style="padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left;">Group</th><th style="padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left;">File Name</th><th style="padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left;">Date</th><th style="padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left;">Time</th><th style="padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left;">LAC</th><th style="padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left;">Cell</th><th style="padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left;">A-Party</th><th style="padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left;">B-Party</th></tr>
+                      </thead>
+                      <tbody id="tdDetailsTableBody"></tbody>
+                  </table>
+              </div>
+          </div>
+      </div>
+
       <!-- GUIDE MODULE -->
       <div class="container-box" id="userManualModuleContainer">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;"><button class="btn btn-secondary" style="width:auto; padding:8px 16px; font-size:12px;" onclick="openModule('home')"><i class="fa-solid fa-arrow-left"></i> Back to Modules</button><button class="btn btn-danger" style="width:auto; padding:8px 16px; font-size:12px;" onclick="openModule('home')"><i class="fa-solid fa-xmark"></i> Close Section</button></div>
@@ -738,8 +938,54 @@
         <div class="subtitle">Complete Bilingual Operational Instructions & Developer Support Contact</div>
         <div style="background:rgba(31, 41, 55, 0.5); padding:30px; border-radius:20px; border:1px solid rgba(255,255,255,0.05); text-align:left; line-height:1.8; color:#f3f4f6;">
           <div style="background: linear-gradient(135deg, #4f46e5, #0ea5e9); color:white; padding:20px 25px; border-radius:16px; margin-bottom:30px; box-shadow: 0 10px 25px rgba(79,70,229,0.3); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;"><div style="font-size:18px; font-weight:800; letter-spacing:0.5px;">For Any Query/Advice</div><div style="font-size:15px; font-weight:700; background:rgba(255,255,255,0.2); padding:10px 18px; border-radius:10px; display:inline-flex; align-items:center; gap:10px;">📱 Mobile / WhatsApp: +8801840304601</div></div>
-          <div style="border-bottom: 2px solid rgba(255,255,255,0.05); padding-bottom: 25px; margin-bottom: 25px;"><h2 style="color:#818cf8; font-size:22px; font-weight:800; margin-bottom:15px;">USER MANUAL & OPERATIONAL GUIDE (ENGLISH)</h2><h3 style="color:#f3f4f6; font-size:18px; margin-top:20px; font-weight:700;">1. BTS Location Analyser (IndexedDB)</h3><p style="font-size: 14px; color:#9ca3af;"><b>Function Brief:</b> Upload multiple BTS Excel files to store them locally in your browser. Search BTS locations using LAC/Cell ID, Lat/Lon, or full CDR text. It will automatically detect the operator and show the location on the map with Azimuth sectors.</p></div>
-          <div><h2 style="color:#34d399; font-size:22px; font-weight:800; margin-bottom:15px;">ইউজার ম্যানুয়াল ও কার্যপদ্ধতি নির্দেশিকা (বাংলা)</h2><h3 style="color:#f3f4f6; font-size:18px; margin-top:20px; font-weight:700;">১. বিটিএস লোকেশন এনালাইজার</h3><p style="font-size: 14px; color:#9ca3af;"><b>সংক্ষিপ্ত বিবরণ:</b> একসাথে একাধিক এক্সেল ফাইল আপলোড করে ব্রাউজারের লোকাল স্টোরেজে (IndexedDB) বিটিএস ডাটা সেভ করুন। LAC/Cell ID, Lat/Lon অথবা সম্পূর্ণ CDR লগ পেস্ট করে বিটিএস এর লোকেশন সার্চ করা যাবে। এটি অটোমেটিক্যালি অপারেটর ডিটেক্ট করে ম্যাপে আজিমুথ সেক্টরসহ দেখাবে।</p></div>
+          
+          <div style="border-bottom: 2px solid rgba(255,255,255,0.05); padding-bottom: 25px; margin-bottom: 25px;">
+            <h2 style="color:#818cf8; font-size:22px; font-weight:800; margin-bottom:15px;">USER MANUAL & OPERATIONAL GUIDE (ENGLISH)</h2>
+            
+            <h3 style="color:#f3f4f6; font-size:18px; margin-top:20px; font-weight:700;">1. CDR Analyser</h3>
+            <p style="font-size: 14px; color:#9ca3af;"><b>Function Brief:</b> Upload multi-operator CDR files to analyze target movements, call logs, and connected B-parties. <br>
+            <b>Sub-sections:</b> <br>
+            - <b>Customized CDR:</b> Filter call logs by date, type, direction, and find new numbers after a specific date.<br>
+            - <b>Profile & Download:</b> View target profile, edit details, upload target/NID images, view B-party profiles (with picture upload), location analysis, IMEI models, and download a full Word report.<br>
+            - <b>Analysis Hub:</b> Advanced analysis of Total/Night B-party, Locations, IMEI, and Common B-party/Location analysis across multiple targets.<br>
+            - <b>Sorter Tools:</b> Extract B-party numbers, format IMEIs, and sort BD numbers by operator.</p>
+            
+            <h3 style="color:#f3f4f6; font-size:18px; margin-top:20px; font-weight:700;">2. SMS Analyser</h3>
+            <p style="font-size: 14px; color:#9ca3af;"><b>Function Brief:</b> Upload SMS dumps to view chronological message history. It automatically extracts utility links (WASA, DPDC, DESCO) and MFS numbers for quick copying.</p>
+
+            <h3 style="color:#f3f4f6; font-size:18px; margin-top:20px; font-weight:700;">3. MFS Analyser</h3>
+            <p style="font-size: 14px; color:#9ca3af;"><b>Function Brief:</b> Analyze bKash, Nagad, and Rocket statements. It classifies counterparties as Agent or Personal, shows total transaction summaries, and allows cross-account common number analysis.</p>
+
+            <h3 style="color:#f3f4f6; font-size:18px; margin-top:20px; font-weight:700;">4. BTS Location Analyser</h3>
+            <p style="font-size: 14px; color:#9ca3af;"><b>Function Brief:</b> Upload multiple BTS Excel files to store them locally in your browser. Search BTS locations using LAC/Cell ID, Lat/Lon, or full CDR text. It will automatically detect the operator and show the location on the map with Azimuth sectors.</p>
+
+            <h3 style="color:#f3f4f6; font-size:18px; margin-top:20px; font-weight:700;">5. Tower Dump Analyser</h3>
+            <p style="font-size: 14px; color:#9ca3af;"><b>Function Brief:</b> Load multiple Tower Dump files, map their columns (Date, Time, A-Party, B-Party, LAC, Cell, IMEI). You can group them by Location or Time (with auto-split features). It finds common A-parties, B-parties, or IMEIs across multiple locations/times. Clicking on a result number shows its exact Tower tracking details.</p>
+          </div>
+          
+          <div>
+            <h2 style="color:#34d399; font-size:22px; font-weight:800; margin-bottom:15px;">ইউজার ম্যানুয়াল ও কার্যপদ্ধতি নির্দেশিকা (বাংলা)</h2>
+            
+            <h3 style="color:#f3f4f6; font-size:18px; margin-top:20px; font-weight:700;">১. সিডিআর এনালাইজার (CDR Analyser)</h3>
+            <p style="font-size: 14px; color:#9ca3af;"><b>সংক্ষিপ্ত বিবরণ:</b> একাধিক অপারেটরের সিডিআর ফাইল আপলোড করে টার্গেটের মুভমেন্ট, কল লগ এবং যোগাযোগের বিশ্লেষণ করুন।<br>
+            <b>সাব-সেকশনসমূহ:</b><br>
+            - <b>কাস্টমাইজড সিডিআর:</b> তারিখ, ধরন, দিক অনুযায়ী কল লগ ফিল্টার করুন এবং নির্দিষ্ট তারিখের পর নতুন নাম্বার খুঁজুন।<br>
+            - <b>প্রোফাইল ও ডাউনলোড:</b> টার্গেটের প্রোফাইল দেখা, তথ্য সম্পাদনা, ছবি/এনআইডি আপলোড, বিপার্টি প্রোফাইল (ছবিসহ), লোকেশন, আইএমইআই মডেল এবং সম্পূর্ণ ওয়ার্ড রিপোর্ট ডাউনলোড করুন।<br>
+            - <b>অ্যানালাইসিস হাব:</b> টোটাল/নাইট বিপার্টি, লোকেশন, আইএমইআই এবং একাধিক টার্গেটের মধ্যে কমন বিপার্টি/লোকেশন বিশ্লেষণ করুন।<br>
+            - <b>সর্টার টুলস:</b> বিপার্টি নাম্বার এক্সট্রাক্ট, আইএমইআই ফরম্যাট এবং অপারেটর অনুযায়ী নাম্বার সাজান।</p>
+            
+            <h3 style="color:#f3f4f6; font-size:18px; margin-top:20px; font-weight:700;">২. এসএমএস এনালাইজার (SMS Analyser)</h3>
+            <p style="font-size: 14px; color:#9ca3af;"><b>সংক্ষিপ্ত বিবরণ:</b> এসএমএস ডাম্প আপলোড করে কালানুক্রমিক মেসেজ হিস্ট্রি দেখুন। এটি স্বয়ংক্রিয়ভাবে ইউটিলিটি লিংক (ওয়াসা, ডিপিডিসি, ডেসকো) এবং এমএফএস নাম্বার কপি করার সুবিধা দেয়।</p>
+
+            <h3 style="color:#f3f4f6; font-size:18px; margin-top:20px; font-weight:700;">৩. এমএফএস এনালাইজার (MFS Analyser)</h3>
+            <p style="font-size: 14px; color:#9ca3af;"><b>সংক্ষিপ্ত বিবরণ:</b> বিকাশ, নগদ এবং রকেটের স্টেটমেন্ট বিশ্লেষণ করুন। এটি অন্য পক্ষকে এজেন্ট বা পার্সোনাল হিসেবে চিহ্নিত করে, মোট লেনদেনের সারাংশ দেখায় এবং একাধিক অ্যাকাউন্টের মধ্যে কমন নাম্বার বিশ্লেষণ করতে দেয়।</p>
+
+            <h3 style="color:#f3f4f6; font-size:18px; margin-top:20px; font-weight:700;">৪. বিটিএস লোকেশন এনালাইজার (BTS Analyser)</h3>
+            <p style="font-size: 14px; color:#9ca3af;"><b>সংক্ষিপ্ত বিবরণ:</b> একসাথে একাধিক এক্সেল ফাইল আপলোড করে ব্রাউজারের লোকাল স্টোরেজে (IndexedDB) বিটিএস ডাটা সেভ করুন। LAC/Cell ID, Lat/Lon অথবা সম্পূর্ণ CDR লগ পেস্ট করে বিটিএস এর লোকেশন সার্চ করা যাবে। এটি অটোমেটিক্যালি অপারেটর ডিটেক্ট করে ম্যাপে আজিমুথ সেক্টরসহ দেখাবে।</p>
+
+            <h3 style="color:#f3f4f6; font-size:18px; margin-top:20px; font-weight:700;">৫. টাওয়ার ডাম্প এনালাইজার (Tower Dump Analyser)</h3>
+            <p style="font-size: 14px; color:#9ca3af;"><b>সংক্ষিপ্ত বিবরণ:</b> একাধিক টাওয়ার ডাম্প ফাইল লোড করে কলাম ম্যাপিং (তারিখ, সময়, এ-পার্টি, বি-পার্টি, LAC, Cell, IMEI) করুন। আপনি এগুলোকে লোকেশন বা টাইম অনুযায়ী গ্রুপ করতে পারবেন (অটো-স্প্লিট সুবিধাসহ)। এটি একাধিক লোকেশন/টাইমের মধ্যে কমন এ-পার্টি, বি-পার্টি বা আইএমইআই খুঁজে বের করে। রেজাল্টে নাম্বারে ক্লিক করলে সেই নাম্বারের টাওয়ার ট্র্যাকিং ডিটেইলস দেখা যায়।</p>
+          </div>
         </div>
       </div>
 
@@ -762,7 +1008,7 @@
     function startSessionWatcher(email) { if (sessionListener) sessionListener(); sessionListener = db.collection("active_sessions").doc(email).onSnapshot(doc => { if (doc.exists) { let data = doc.data(); if (data.sessionId && data.sessionId !== currentSessionId) { alert("⚠️ Security Alert: Account logged in from another device. You are being logged out."); performLogout(); } } }); }
     window.performLogout = async function() { if (sessionListener) sessionListener(); try { await auth.signOut(); } catch(e) {} localStorage.removeItem("isKrishCloudLoggedIn"); localStorage.removeItem("krishUserEmail"); localStorage.removeItem("krishDeviceSessionId"); location.reload(); }
     document.addEventListener("DOMContentLoaded", function() { loadPersistentProfileDB(); if (localStorage.getItem("isKrishCloudLoggedIn") === "true") { let savedEmail = localStorage.getItem("krishUserEmail"); if (savedEmail) { currentUserEmail = savedEmail; isAdminUser = (currentUserEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase()); currentSessionId = getOrCreateSessionId(); db.collection("active_sessions").doc(currentUserEmail).get().then(async doc => { if (doc.exists && doc.data().sessionId === currentSessionId) { startSessionWatcher(currentUserEmail); await loadCentralizedProfiles(); document.getElementById('frontLoginScreen').style.display = 'none'; document.getElementById('topHeaderBar').style.display = 'flex'; document.getElementById('appMainLayout').style.display = 'block'; document.getElementById('userInfoDisplay').innerHTML = `Connected: <strong class="text-blue-400">${currentUserEmail} (${isAdminUser ? 'Admin' : 'User'})</strong>`; if (isAdminUser) { document.getElementById('sidebarGlobalSearchContainer').style.display = 'block'; } } else { performLogout(); } }).catch(() => performLogout()); } } });
-    window.openModule = function(mod) { ['landingPageContainer', 'mainDashboardContainer', 'smsAnalyzerModuleContainer', 'mfsAnalyzerModuleContainer', 'btsAnalyzerModuleContainer', 'userManualModuleContainer'].forEach(id => document.getElementById(id).style.display = 'none'); if (mod === 'home') { document.getElementById('landingPageContainer').style.display = 'block'; } else if (mod === 'cdr') { document.getElementById('mainDashboardContainer').style.display = 'block'; } else if (mod === 'sms') { document.getElementById('smsAnalyzerModuleContainer').style.display = 'block'; } else if (mod === 'mfs') { document.getElementById('mfsAnalyzerModuleContainer').style.display = 'block'; } else if (mod === 'bts') { document.getElementById('btsAnalyzerModuleContainer').style.display = 'block'; setTimeout(() => { if (btsMap) btsMap.invalidateSize(); }, 200); } else if (mod === 'guide') { document.getElementById('userManualModuleContainer').style.display = 'block'; } }
+    window.openModule = function(mod) { ['landingPageContainer', 'mainDashboardContainer', 'smsAnalyzerModuleContainer', 'mfsAnalyzerModuleContainer', 'btsAnalyzerModuleContainer', 'towerDumpAnalyzerModuleContainer', 'userManualModuleContainer'].forEach(id => document.getElementById(id).style.display = 'none'); if (mod === 'home') { document.getElementById('landingPageContainer').style.display = 'block'; } else if (mod === 'cdr') { document.getElementById('mainDashboardContainer').style.display = 'block'; } else if (mod === 'sms') { document.getElementById('smsAnalyzerModuleContainer').style.display = 'block'; } else if (mod === 'mfs') { document.getElementById('mfsAnalyzerModuleContainer').style.display = 'block'; } else if (mod === 'bts') { document.getElementById('btsAnalyzerModuleContainer').style.display = 'block'; setTimeout(() => { if (btsMap) btsMap.invalidateSize(); }, 200); } else if (mod === 'towerdump') { document.getElementById('towerDumpAnalyzerModuleContainer').style.display = 'block'; } else if (mod === 'guide') { document.getElementById('userManualModuleContainer').style.display = 'block'; } }
     window.calculateLuhnCheckDigit = function(imei14) { let sum = 0; for (let i = 0; i < 14; i++) { let d = parseInt(imei14.charAt(i), 10); if (i % 2 === 1) { d *= 2; if (d > 9) d -= 9; } sum += d; } let mod = sum % 10; return mod === 0 ? 0 : 10 - mod; }
     window.correctImeiNumber = function(rawImei) { let clean = String(rawImei || "").replace(/\D/g, ""); if (clean.length === 14) { return clean + calculateLuhnCheckDigit(clean); } else if (clean.length >= 15) { let base14 = clean.slice(0, 14); return base14 + calculateLuhnCheckDigit(base14); } return clean; }
     window.lookupSidebarIMEI = function() { let rawImei = document.getElementById('sidebar-imei-input').value.trim(); let fixedImei = correctImeiNumber(rawImei); if (fixedImei.length < 14) { alert('Please enter a valid 14-15 digit IMEI number.'); return; } window.open(`https://www.imei.info/?imei=${fixedImei}`, '_blank'); }
@@ -943,7 +1189,6 @@
         if(!globalProfileDB[activeTargetNumber].BPartyProfiles) globalProfileDB[activeTargetNumber].BPartyProfiles = {}; 
         let bProfiles = globalProfileDB[activeTargetNumber].BPartyProfiles; 
         
-        // PROFILE HUB TABLES
         let filterModeProfile = document.getElementById('profileNumberType') ? document.getElementById('profileNumberType').value : 'all';
         let minUsageB = parseInt(document.getElementById('minUsage-bparty').value) || 0; 
         let searchB = document.getElementById('bpartySearchInput').value.toLowerCase(); 
@@ -1014,7 +1259,6 @@
         renderLocationTable('nightLocation', 'container-nightLocation', rows, true); 
         renderImeiTable(rows); 
         
-        // ANALYSIS HUB TABLES
         let filterModeAnalysis = document.getElementById('analysisNumberType') ? document.getElementById('analysisNumberType').value : 'all';
         let minUsageBAnalysis = parseInt(document.getElementById('minUsage-bparty-analysis').value) || 0; 
         let searchBAnalysis = document.getElementById('bpartySearchInput-analysis').value.toLowerCase(); 
@@ -1157,7 +1401,6 @@
     
     window.runAdminGlobalSearch = function() { if (!isAdminUser) return; let query = document.getElementById('adminGlobalSearchInput').value.trim().toLowerCase(); let resContainer = document.getElementById('adminGlobalSearchResultContainer'); if (!query) { resContainer.innerHTML = `<p style="color:#ef4444;">Please enter search query!</p>`; return; } let matches = []; cleanedMultiCDR.forEach(r => { if (r.A_Party.toLowerCase().includes(query) || r.B_Party.toLowerCase().includes(query) || (r.Address && r.Address.toLowerCase().includes(query)) || (r.IMEI && r.IMEI.toLowerCase().includes(query))) { matches.push(r); } }); if (matches.length === 0) { resContainer.innerHTML = `<p style="color:#9ca3af;">No matching records found.</p>`; return; } let h = `<table style="font-size:10px;"><thead><tr><th>Target</th><th>B-Party</th><th>Date</th></tr></thead><tbody>`; matches.slice(0, 20).forEach(m => { h += `<tr><td><b>${m.A_Party}</b></td><td>${m.B_Party}</td><td>${m.Date}</td></tr>`; }); h += `</tbody></table>`; resContainer.innerHTML = h; }
     
-    // === PROFILE REPORT GENERATION ===
     window.downloadProfileReportWordHub = function () {
         let targetNum = activeTargetNumber;
         let targetRows = cleanedMultiCDR.filter(r => r.A_Party === targetNum);
@@ -1176,10 +1419,8 @@
         let limitImei = (document.getElementById('reportLimitImei') || {}).value || '10';
         let reportFilter = (document.getElementById('profileNumberType') || {}).value || 'all';
 
-        // ১. হেডার (ছবি, নাম, আইডি)
         let htmlContent = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Complete Profile Report</title><style>body { font-family: 'Times New Roman', serif; font-size: 11pt; color: #000; } table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px; } th, td { border: 1px solid #000; padding: 6px 8px; text-align: left; vertical-align: top; font-size: 10pt; } th { background-color: #f2f2f2; font-weight: bold; } h2 { text-align: center; color: #000; margin-bottom: 5px; } .section-title { font-weight: bold; font-size: 11pt; margin-top: 15px; margin-bottom: 5px; color: #000; }</style></head><body><h2>FORENSIC INTELLIGENCE SUITE - PROFILE REPORT</h2><hr style="border: 1px solid #000; margin-bottom: 15px;"><table><tr><td style="width:100px; text-align:center;">${targetImgHtml}</td><td style="width:100px; text-align:center;">${nidImgHtml}</td><td><b>Target / ID:</b> ${targetNum}${dateRangeStr} ${submittedByStr}<br><b>Name / NID:</b> ${prof.Name || ''}<br><b>Previously Connected:</b> ${prof.ConnectedWith || ''}</td></tr></table>`;
 
-        // ২. IMEI Lookup Analysis (সবার আগে)
         let iMap = {};
         targetRows.forEach(r => { if (r.IMEI) { if (!iMap[r.IMEI]) iMap[r.IMEI] = { count: 0, rows: [] }; iMap[r.IMEI].count++; iMap[r.IMEI].rows.push(r); } });
         let sortedI = Object.keys(iMap).sort((a, b) => iMap[b].count - iMap[a].count);
@@ -1193,7 +1434,6 @@
         if (sortedI.length === 0) htmlContent += `<tr><td colspan="3" style="text-align:center;">No records found</td></tr>`;
         htmlContent += `</table>`;
 
-        // ৩. Total B-Party
         let bMap = {};
         targetRows.forEach(r => { if (r.B_Party && passNumberFilter(r.B_Party, reportFilter)) { if (!bMap[r.B_Party]) bMap[r.B_Party] = { count: 0, dur: 0, rows: [] }; bMap[r.B_Party].count++; bMap[r.B_Party].dur += r.Duration; bMap[r.B_Party].rows.push(r); } });
         let sortedB = Object.keys(bMap).filter(b => bMap[b].count >= minUsageB).sort((a, b) => bMap[b].count - bMap[a].count);
@@ -1204,13 +1444,19 @@
             let bp = bProfiles[b] || {};
             let bpPicHtml = bp.pic ? `<img src="${bp.pic}" style="width:70px; height:80px; object-fit:cover;"><br>` : '';
             let numDetails = getNumberDetails(b, reportFilter);
+            
+            // Generate display string with bracket for IP/Foreign
+            let bpNumDisplay = numDetails.formatted;
+            if (numDetails.type === 'IP' || numDetails.type === 'Foreign') {
+                bpNumDisplay += ` <span style="font-size: 8pt; color: #444;">(${numDetails.label})</span>`;
+            }
+
             let usageText = `${bMap[b].count} times & ${bMap[b].dur}s<br>${dRange}`;
-            htmlContent += `<tr><td>${bpPicHtml}<b>${numDetails.formatted}</b></td><td>${bp.details || ''}</td><td>${usageText}</td></tr>`;
+            htmlContent += `<tr><td>${bpPicHtml}<b>${bpNumDisplay}</b></td><td>${bp.details || ''}</td><td>${usageText}</td></tr>`;
         });
         if (sortedB.length === 0) htmlContent += `<tr><td colspan="3" style="text-align:center;">No records found</td></tr>`;
         htmlContent += `</table>`;
 
-        // ৪. Night B-Party
         let nMap = {};
         targetRows.forEach(r => { let hr = parseInt(r.Hour, 10) || 0; if (hr >= 0 && hr < 8 && r.B_Party && passNumberFilter(r.B_Party, reportFilter)) { if (!nMap[r.B_Party]) nMap[r.B_Party] = { count: 0, dur: 0, rows: [] }; nMap[r.B_Party].count++; nMap[r.B_Party].dur += r.Duration; nMap[r.B_Party].rows.push(r); } });
         let sortedN = Object.keys(nMap).filter(b => nMap[b].count >= minUsageN).sort((a, b) => nMap[b].count - nMap[a].count);
@@ -1221,13 +1467,19 @@
             let bp = bProfiles[b] || {};
             let bpPicHtml = bp.pic ? `<img src="${bp.pic}" style="width:70px; height:80px; object-fit:cover;"><br>` : '';
             let numDetails = getNumberDetails(b, reportFilter);
+            
+            // Generate display string with bracket for IP/Foreign
+            let bpNumDisplay = numDetails.formatted;
+            if (numDetails.type === 'IP' || numDetails.type === 'Foreign') {
+                bpNumDisplay += ` <span style="font-size: 8pt; color: #444;">(${numDetails.label})</span>`;
+            }
+
             let usageText = `${nMap[b].count} times & ${nMap[b].dur}s<br>${dRange}`;
-            htmlContent += `<tr><td>${bpPicHtml}<b>${numDetails.formatted}</b></td><td>${bp.details || ''}</td><td>${usageText}</td></tr>`;
+            htmlContent += `<tr><td>${bpPicHtml}<b>${bpNumDisplay}</b></td><td>${bp.details || ''}</td><td>${usageText}</td></tr>`;
         });
         if (sortedN.length === 0) htmlContent += `<tr><td colspan="3" style="text-align:center;">No records found</td></tr>`;
         htmlContent += `</table>`;
 
-        // ৫. All Location
         let lMap = {};
         targetRows.forEach(r => { let loc = r.Address || (r.LAC && r.Cell ? `LAC: ${r.LAC}, Cell: ${r.Cell}` : ""); if (!lMap[loc]) lMap[loc] = { count: 0, lac: r.LAC, cell: r.Cell, rows: [] }; lMap[loc].count++; lMap[loc].rows.push(r); });
         let sortedL = Object.keys(lMap).sort((a, b) => lMap[b].count - lMap[a].count);
@@ -1237,7 +1489,6 @@
         if (sortedL.length === 0) htmlContent += `<tr><td colspan="5" style="text-align:center;">No records found</td></tr>`;
         htmlContent += `</table>`;
 
-        // ৬. Night Location
         let nlMap = {};
         targetRows.forEach(r => { let hr = parseInt(r.Hour, 10) || 0; if (hr >= 0 && hr < 8) { let loc = r.Address || (r.LAC && r.Cell ? `LAC: ${r.LAC}, Cell: ${r.Cell}` : ""); if (!nlMap[loc]) nlMap[loc] = { count: 0, lac: r.LAC, cell: r.Cell, rows: [] }; nlMap[loc].count++; nlMap[loc].rows.push(r); } });
         let sortedNL = Object.keys(nlMap).sort((a, b) => nlMap[b].count - nlMap[a].count);
@@ -1346,15 +1597,8 @@
     window.findNewNumbersAfterDate = function() {
         try {
             let dateVal = document.getElementById('customFilterNewNumberDate').value;
-            if (!dateVal) {
-                alert("⚠️ অনুগ্রহ করে আগে 'New Number After' ঘরে একটি তারিখ সিলেক্ট করুন।");
-                return;
-            }
-            
-            if (!activeTargetNumber) {
-                alert("⚠️ কোনো টার্গেট সিলেক্ট করা নেই। আগে Target Toggle থেকে টার্গেট সিলেক্ট করুন।");
-                return;
-            }
+            if (!dateVal) { alert("⚠️ অনুগ্রহ করে আগে 'New Number After' ঘরে একটি তারিখ সিলেক্ট করুন।"); return; }
+            if (!activeTargetNumber) { alert("⚠️ কোনো টার্গেট সিলেক্ট করা নেই। আগে Target Toggle থেকে টার্গেট সিলেক্ট করুন।"); return; }
 
             let rows = cleanedMultiCDR.filter(r => r.A_Party === activeTargetNumber);
             let filterMode = document.getElementById('customFilterNumberType').value;
@@ -1363,25 +1607,16 @@
             rows.forEach(r => {
                 let bp = r.B_Party;
                 if (!bp) return;
-                
                 if (!passNumberFilter(bp, filterMode)) return;
                 
                 let rDate = String(r.Date).trim();
                 if (rDate.includes('/')) {
                     let p = rDate.split(' ')[0].split('/');
-                    if (p.length === 3) {
-                        rDate = `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
-                    }
+                    if (p.length === 3) { rDate = `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`; }
                 }
                 
                 if (!bpStats[bp]) bpStats[bp] = { before: 0, after: 0, rows: [] };
-                
-                if (rDate < dateVal) {
-                    bpStats[bp].before++;
-                } else {
-                    bpStats[bp].after++;
-                    bpStats[bp].rows.push(r);
-                }
+                if (rDate < dateVal) { bpStats[bp].before++; } else { bpStats[bp].after++; bpStats[bp].rows.push(r); }
             });
             
             let newNumbers = [];
@@ -1399,61 +1634,23 @@
                 return;
             }
             
-            newRowsToDisplay.sort((a, b) => {
-                let dtA = a.Date + " " + a.Time;
-                let dtB = b.Date + " " + b.Time;
-                return dtA.localeCompare(dtB);
-            });
-            
+            newRowsToDisplay.sort((a, b) => (a.Date + " " + a.Time).localeCompare(b.Date + " " + b.Time));
             document.getElementById('newNumbersDateLabel').innerText = dateVal;
             
-            let h = `<table id="table-new-numbers" style="width: 100%; border-collapse: collapse; font-size: 12px; color: #f3f4f6; table-layout: fixed;">
-            <thead>
-                <tr>
-                    <th style="width:95px; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 10px 12px; background: rgba(31, 41, 55, 0.8); color: #93c5fd; position: sticky; top: 0; z-index: 10; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px;">Date</th>
-                    <th style="width:75px; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 10px 12px; background: rgba(31, 41, 55, 0.8); color: #93c5fd; position: sticky; top: 0; z-index: 10; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px;">Time</th>
-                    <th style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 10px 12px; background: rgba(31, 41, 55, 0.8); color: #93c5fd; position: sticky; top: 0; z-index: 10; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px;">Aparty</th>
-                    <th style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 10px 12px; background: rgba(31, 41, 55, 0.8); color: #93c5fd; position: sticky; top: 0; z-index: 10; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px;">Bparty/Name</th>
-                    <th style="width:80px; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 10px 12px; background: rgba(31, 41, 55, 0.8); color: #93c5fd; position: sticky; top: 0; z-index: 10; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px;">Duration</th>
-                    <th style="width:70px; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 10px 12px; background: rgba(31, 41, 55, 0.8); color: #93c5fd; position: sticky; top: 0; z-index: 10; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px;">Type</th>
-                    <th style="width:70px; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 10px 12px; background: rgba(31, 41, 55, 0.8); color: #93c5fd; position: sticky; top: 0; z-index: 10; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px;">Network</th>
-                    <th style="width:70px; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 10px 12px; background: rgba(31, 41, 55, 0.8); color: #93c5fd; position: sticky; top: 0; z-index: 10; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px;">LAC</th>
-                    <th style="width:70px; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 10px 12px; background: rgba(31, 41, 55, 0.8); color: #93c5fd; position: sticky; top: 0; z-index: 10; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px;">Cell</th>
-                    <th style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 10px 12px; background: rgba(31, 41, 55, 0.8); color: #93c5fd; position: sticky; top: 0; z-index: 10; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px;">Imei</th>
-                    <th style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 10px 12px; background: rgba(31, 41, 55, 0.8); color: #93c5fd; position: sticky; top: 0; z-index: 10; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px;">Address</th>
-                </tr>
-            </thead>
-            <tbody>`;
+            let h = `<table id="table-new-numbers" style="width: 100%; border-collapse: collapse; font-size: 12px; color: #f3f4f6; table-layout: fixed;"><thead><tr><th style="width:95px; padding: 10px 12px; background: rgba(31, 41, 55, 0.8); color: #93c5fd;">Date</th><th style="width:75px; padding: 10px 12px; background: rgba(31, 41, 55, 0.8); color: #93c5fd;">Time</th><th style="padding: 10px 12px; background: rgba(31, 41, 55, 0.8); color: #93c5fd;">Aparty</th><th style="padding: 10px 12px; background: rgba(31, 41, 55, 0.8); color: #93c5fd;">Bparty/Name</th><th style="width:80px; padding: 10px 12px; background: rgba(31, 41, 55, 0.8); color: #93c5fd;">Duration</th><th style="width:70px; padding: 10px 12px; background: rgba(31, 41, 55, 0.8); color: #93c5fd;">Type</th><th style="width:70px; padding: 10px 12px; background: rgba(31, 41, 55, 0.8); color: #93c5fd;">Network</th><th style="width:70px; padding: 10px 12px; background: rgba(31, 41, 55, 0.8); color: #93c5fd;">LAC</th><th style="width:70px; padding: 10px 12px; background: rgba(31, 41, 55, 0.8); color: #93c5fd;">Cell</th><th style="padding: 10px 12px; background: rgba(31, 41, 55, 0.8); color: #93c5fd;">Imei</th><th style="padding: 10px 12px; background: rgba(31, 41, 55, 0.8); color: #93c5fd;">Address</th></tr></thead><tbody>`;
             
             newRowsToDisplay.forEach(r => {
                 let numDetails = getNumberDetails(r.B_Party, filterMode);
                 let bpHtml = `<b style="color:#38bdf8;">${numDetails.display}</b> <span style="background:#0284c7; color:white; font-size:9px; padding:2px 5px; border-radius:4px; margin-left:6px; font-weight:bold;">NEW</span>`;
-                h += `<tr>
-                    <td style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 10px 12px;">${r.Date}</td>
-                    <td style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 10px 12px;">${r.Time}</td>
-                    <td style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 10px 12px;">${r.A_Party}</td>
-                    <td style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 10px 12px;">${bpHtml}</td>
-                    <td style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 10px 12px;">${r.Duration}</td>
-                    <td style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 10px 12px;">${r.UsageType}</td>
-                    <td style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 10px 12px;">${r.NetworkType}</td>
-                    <td style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 10px 12px;">${r.LAC}</td>
-                    <td style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 10px 12px;">${r.Cell}</td>
-                    <td style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 10px 12px;">${r.IMEI}</td>
-                    <td style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 10px 12px;">${r.Address}</td>
-                </tr>`;
+                h += `<tr><td style="padding: 10px 12px; border-bottom:1px solid rgba(255,255,255,0.05);">${r.Date}</td><td style="padding: 10px 12px; border-bottom:1px solid rgba(255,255,255,0.05);">${r.Time}</td><td style="padding: 10px 12px; border-bottom:1px solid rgba(255,255,255,0.05);">${r.A_Party}</td><td style="padding: 10px 12px; border-bottom:1px solid rgba(255,255,255,0.05);">${bpHtml}</td><td style="padding: 10px 12px; border-bottom:1px solid rgba(255,255,255,0.05);">${r.Duration}</td><td style="padding: 10px 12px; border-bottom:1px solid rgba(255,255,255,0.05);">${r.UsageType}</td><td style="padding: 10px 12px; border-bottom:1px solid rgba(255,255,255,0.05);">${r.NetworkType}</td><td style="padding: 10px 12px; border-bottom:1px solid rgba(255,255,255,0.05);">${r.LAC}</td><td style="padding: 10px 12px; border-bottom:1px solid rgba(255,255,255,0.05);">${r.Cell}</td><td style="padding: 10px 12px; border-bottom:1px solid rgba(255,255,255,0.05);">${r.IMEI}</td><td style="padding: 10px 12px; border-bottom:1px solid rgba(255,255,255,0.05);">${r.Address}</td></tr>`;
             });
             
             h += `</tbody></table>`;
             document.getElementById('container-new-numbers').innerHTML = h;
             document.getElementById('newNumbersResultSection').style.display = 'block';
             document.getElementById('newNumbersResultSection').scrollIntoView({ behavior: 'smooth' });
-            
             alert(`✅ সফলভাবে ${newNumbers.length} টি নতুন নাম্বার পাওয়া গেছে! টেবিলটি দেখুন।`);
-            
-        } catch (err) {
-            console.error(err);
-            alert("Error processing new numbers: " + err.message);
-        }
+        } catch (err) { console.error(err); alert("Error processing new numbers: " + err.message); }
     }
 
     window.downloadCustomizedWord = function() { 
@@ -1463,9 +1660,7 @@
         let a = document.createElement('a'); 
         a.href = url; 
         a.download = `Customized_CDR_${activeTargetNumber}.doc`; 
-        document.body.appendChild(a); 
-        a.click(); 
-        document.body.removeChild(a); 
+        document.body.appendChild(a); a.click(); document.body.removeChild(a); 
     }
     window.downloadHistoryWord = function() { 
         let tableEl = document.getElementById('table-history'); 
@@ -1474,11 +1669,8 @@
         let blob = new Blob(['\ufeff' + tableHtml], { type: 'application/msword' }); 
         let url = URL.createObjectURL(blob); 
         let a = document.createElement('a'); 
-        a.href = url; 
-        a.download = `History_CDR_${activeTargetNumber}.doc`; 
-        document.body.appendChild(a); 
-        a.click(); 
-        document.body.removeChild(a); 
+        a.href = url; a.download = `History_CDR_${activeTargetNumber}.doc`; 
+        document.body.appendChild(a); a.click(); document.body.removeChild(a); 
     }
     
     window.downloadCommonWordLegal = function(isAnalysisHub) { 
@@ -1493,8 +1685,7 @@
             let tRows = cleanedMultiCDR.filter(r => r.A_Party === tNum); 
             let entityMap = {}; 
             tRows.forEach(r => { 
-                let val = ""; 
-                let lacVal = "", cellVal = ""; 
+                let val = ""; let lacVal = "", cellVal = ""; 
                 if (cat === 'bparty' && r.B_Party) val = r.B_Party; 
                 else if (cat === 'nightBparty') { let hr = parseInt(r.Hour, 10) || 0; if (hr >= 0 && hr < 8 && r.B_Party) val = r.B_Party; } 
                 else if (cat === 'location' && r.Address) { val = r.Address; lacVal = r.LAC; cellVal = r.Cell; } 
@@ -1526,9 +1717,7 @@
                     detailsMap[tNum] = { count: rows.length, firstDate: dates.length > 0 ? formatDateToDDMMYYYY(dates[0]) : '', lastDate: dates.length > 0 ? formatDateToDDMMYYYY(dates[dates.length - 1]) : '' }; 
                 } 
             }); 
-            if (matchingTargets.length >= 2) { 
-                results.push({ entity: entity, matchingTargets: matchingTargets, detailsMap: detailsMap, lac: entityLac, cell: entityCell }); 
-            } 
+            if (matchingTargets.length >= 2) { results.push({ entity: entity, matchingTargets: matchingTargets, detailsMap: detailsMap, lac: entityLac, cell: entityCell }); } 
         }); 
         
         let isBparty = cat.includes('bparty');
@@ -1541,31 +1730,18 @@
         } else { 
             results.forEach((res, idx) => { 
                 let detailsText = ""; 
-                res.matchingTargets.forEach(tNum => { 
-                    let d = res.detailsMap[tNum]; 
-                    detailsText += `Target ${tNum}: connected ${d.count} times (${d.firstDate} - ${d.lastDate}); `; 
-                }); 
-                let entityDisplay = res.entity; 
-                let extraColVal = '';
-                if (isBparty) {
-                    let numDetails = getNumberDetails(res.entity, filterMode);
-                    entityDisplay = numDetails.formatted;
-                    extraColVal = `<td>${numDetails.label || 'N/A'}</td>`;
-                } else if ((cat === 'location' || cat === 'nightLocation') && (res.lac || res.cell)) { 
-                    entityDisplay += `<br>LAC- ${res.lac || ''} CELL- ${res.cell || ''}`; 
-                } 
+                res.matchingTargets.forEach(tNum => { let d = res.detailsMap[tNum]; detailsText += `Target ${tNum}: connected ${d.count} times (${d.firstDate} - ${d.lastDate}); `; }); 
+                let entityDisplay = res.entity; let extraColVal = '';
+                if (isBparty) { let numDetails = getNumberDetails(res.entity, filterMode); entityDisplay = numDetails.formatted; extraColVal = `<td>${numDetails.label || 'N/A'}</td>`; } 
+                else if ((cat === 'location' || cat === 'nightLocation') && (res.lac || res.cell)) { entityDisplay += `<br>LAC- ${res.lac || ''} CELL- ${res.cell || ''}`; } 
                 htmlContent += `<tr><td>${idx + 1}</td><td><b>${entityDisplay}</b></td>${extraColVal}<td>Common between [<b>${res.matchingTargets.join(', ')}</b>]:<br>${detailsText}</td></tr>`; 
             }); 
         } 
         htmlContent += `</table></body></html>`; 
         let blob = new Blob(['\ufeff' + htmlContent], { type: 'application/msword' }); 
         let url = URL.createObjectURL(blob); 
-        let a = document.createElement('a'); 
-        a.href = url; 
-        a.download = `Common_Analysis_${cat}.doc`; 
-        document.body.appendChild(a); 
-        a.click(); 
-        document.body.removeChild(a); 
+        let a = document.createElement('a'); a.href = url; a.download = `Common_Analysis_${cat}.doc`; 
+        document.body.appendChild(a); a.click(); document.body.removeChild(a); 
     }
     
     window.processImeiSorting = function() { let text = document.getElementById('imeiSorterInput').value; let numbers = text.match(/\d{10,}/g) || []; let uniqueNums = Array.from(new Set(numbers)); let chunks = []; for (let i = 0; i < uniqueNums.length; i += 5) { let chunkNums = uniqueNums.slice(i, i + 5).join(' '); chunks.push(`IMEI-MS ${chunkNums}`); } document.getElementById('imeiSorterOutput').value = chunks.join('\n'); }
@@ -1588,10 +1764,7 @@
         function formatOperatorOutputWithRepeatingPrefix(list, formatType) { 
             if (!list.length) return "[None]"; 
             let chunks = []; 
-            for (let i = 0; i < list.length; i += 5) { 
-                let chunkNums = list.slice(i, i + 5).join(' '); 
-                chunks.push(`${formatType} ${chunkNums}`); 
-            } 
+            for (let i = 0; i < list.length; i += 5) { let chunkNums = list.slice(i, i + 5).join(' '); chunks.push(`${formatType} ${chunkNums}`); } 
             return chunks.join('\n'); 
         } 
         document.getElementById('outputGP').value = formatOperatorOutputWithRepeatingPrefix(gp, document.getElementById('formatGP').value); 
@@ -1640,9 +1813,7 @@
                     detailsMap[tNum] = { count: rows.length, firstDate: dates.length > 0 ? formatDateToDDMMYYYY(dates[0]) : '', lastDate: dates.length > 0 ? formatDateToDDMMYYYY(dates[dates.length - 1]) : '' }; 
                 } 
             }); 
-            if (matchingTargets.length >= 2) { 
-                results.push({ entity: entity, matchingTargets: matchingTargets, detailsMap: detailsMap }); 
-            } 
+            if (matchingTargets.length >= 2) { results.push({ entity: entity, matchingTargets: matchingTargets, detailsMap: detailsMap }); } 
         }); 
         
         let isBparty = cat.includes('bparty');
@@ -1655,20 +1826,10 @@
         } else { 
             results.forEach((res, idx) => { 
                 let detailsHtml = `<ul style="margin:0; padding-left:15px; font-size:10pt;">`; 
-                res.matchingTargets.forEach(tNum => { 
-                    let d = res.detailsMap[tNum]; 
-                    detailsHtml += `<li><b>Target ${tNum}:</b> connected ${d.count} times (${d.firstDate} - ${d.lastDate})</li>`; 
-                }); 
+                res.matchingTargets.forEach(tNum => { let d = res.detailsMap[tNum]; detailsHtml += `<li><b>Target ${tNum}:</b> connected ${d.count} times (${d.firstDate} - ${d.lastDate})</li>`; }); 
                 detailsHtml += `</ul>`; 
-                
-                let entityDisplay = res.entity;
-                let extraColVal = '';
-                if(isBparty) {
-                    let numDetails = getNumberDetails(res.entity, filterMode);
-                    entityDisplay = numDetails.formatted;
-                    extraColVal = `<td>${numDetails.label || 'N/A'}</td>`;
-                }
-                
+                let entityDisplay = res.entity; let extraColVal = '';
+                if(isBparty) { let numDetails = getNumberDetails(res.entity, filterMode); entityDisplay = numDetails.formatted; extraColVal = `<td>${numDetails.label || 'N/A'}</td>`; }
                 hC += `<tr><td>${idx + 1}</td><td><b>${entityDisplay}</b></td>${extraColVal}<td>Common between [<b>${res.matchingTargets.join(', ')}</b>]:<br>${detailsHtml}</td></tr>`; 
             }); 
         } 
@@ -1719,299 +1880,567 @@
     window.closeCommonAnalysisModal = function() { document.getElementById('commonModal').classList.add('hidden'); }
     window.applyMfsFilters = function() { if (!currentActiveMfsAccount) return; let search = document.getElementById('searchNumber').value.trim(); let txns = allMfsAccountsData[currentActiveMfsAccount].transactions.filter(t => search === '' || t.sender.includes(search) || t.receiver.includes(search)); renderMfsTables(txns, currentActiveMfsAccount); }
     window.exportAllProfiles = function() { let blob = new Blob([JSON.stringify(mfsAccountProfiles, null, 2)], { type: 'application/json' }); let url = URL.createObjectURL(blob); let a = document.createElement('a'); a.href = url; a.download = 'krish_mfs_profiles_backup.json'; a.click(); }
-
-    window.downloadMfsWord = function() {
-        if (!currentActiveMfsAccount) { alert("No active MFS account to download."); return; }
-        let accNo = currentActiveMfsAccount;
-        let htmlContent = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>MFS Analysis Report</title><style>body { font-family: 'Times New Roman', serif; font-size: 11pt; color: #000; } table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px; } th, td { border: 1px solid #000; padding: 6px 8px; text-align: left; vertical-align: top; font-size: 10pt; } th { background-color: #f2f2f2; font-weight: bold; } h2, h3 { text-align: center; color: #000; }</style></head><body>`;
-        htmlContent += `<h2>MFS Statement Analysis - ${accNo}</h2>`;
-        
-        htmlContent += `<h3>Outgoing Transactions</h3>`;
-        let sendTable = document.getElementById('mfsSendTable').cloneNode(true);
-        cleanMfsTableForWord(sendTable);
-        htmlContent += sendTable.outerHTML;
-
-        htmlContent += `<h3>Incoming Transactions</h3>`;
-        let recvTable = document.getElementById('mfsReceiveTable').cloneNode(true);
-        cleanMfsTableForWord(recvTable);
-        htmlContent += recvTable.outerHTML;
-
-        htmlContent += `</body></html>`;
-        let blob = new Blob(['\ufeff' + htmlContent], { type: 'application/msword' });
-        let url = URL.createObjectURL(blob);
-        let a = document.createElement('a'); a.href = url; a.download = `MFS_Report_${accNo}.doc`;
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    }
-
-    function cleanMfsTableForWord(table) {
-        table.querySelectorAll('img').forEach(img => img.remove());
-        table.querySelectorAll('button').forEach(btn => btn.remove());
-        table.querySelectorAll('input').forEach(inp => inp.remove());
-        table.querySelectorAll('textarea').forEach(ta => {
-            let span = document.createElement('span');
-            span.innerText = ta.value;
-            ta.parentNode.replaceChild(span, ta);
-        });
-        table.querySelectorAll('.no-print').forEach(el => el.remove());
-    }
-
-    window.downloadMfsExcel = function() {
-        if (!currentActiveMfsAccount) { alert("No active MFS account to download."); return; }
-        let accNo = currentActiveMfsAccount;
-        let wb = XLSX.utils.book_new();
-        
-        let sendTable = document.getElementById('mfsSendTable');
-        let wsSend = XLSX.utils.table_to_sheet(sendTable);
-        XLSX.utils.book_append_sheet(wb, wsSend, "Outgoing");
-
-        let recvTable = document.getElementById('mfsReceiveTable');
-        let wsRecv = XLSX.utils.table_to_sheet(recvTable);
-        XLSX.utils.book_append_sheet(wb, wsRecv, "Incoming");
-
-        XLSX.writeFile(wb, `MFS_Report_${accNo}.xlsx`);
-    }
+    window.downloadMfsWord = function() { if (!currentActiveMfsAccount) { alert("No active MFS account to download."); return; } let accNo = currentActiveMfsAccount; let htmlContent = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>MFS Analysis Report</title><style>body { font-family: 'Times New Roman', serif; font-size: 11pt; color: #000; } table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px; } th, td { border: 1px solid #000; padding: 6px 8px; text-align: left; vertical-align: top; font-size: 10pt; } th { background-color: #f2f2f2; font-weight: bold; } h2, h3 { text-align: center; color: #000; }</style></head><body>`; htmlContent += `<h2>MFS Statement Analysis - ${accNo}</h2>`; htmlContent += `<h3>Outgoing Transactions</h3>`; let sendTable = document.getElementById('mfsSendTable').cloneNode(true); cleanMfsTableForWord(sendTable); htmlContent += sendTable.outerHTML; htmlContent += `<h3>Incoming Transactions</h3>`; let recvTable = document.getElementById('mfsReceiveTable').cloneNode(true); cleanMfsTableForWord(recvTable); htmlContent += recvTable.outerHTML; htmlContent += `</body></html>`; let blob = new Blob(['\ufeff' + htmlContent], { type: 'application/msword' }); let url = URL.createObjectURL(blob); let a = document.createElement('a'); a.href = url; a.download = `MFS_Report_${accNo}.doc`; document.body.appendChild(a); a.click(); document.body.removeChild(a); }
+    function cleanMfsTableForWord(table) { table.querySelectorAll('img').forEach(img => img.remove()); table.querySelectorAll('button').forEach(btn => btn.remove()); table.querySelectorAll('input').forEach(inp => inp.remove()); table.querySelectorAll('textarea').forEach(ta => { let span = document.createElement('span'); span.innerText = ta.value; ta.parentNode.replaceChild(span, ta); }); table.querySelectorAll('.no-print').forEach(el => el.remove()); }
+    window.downloadMfsExcel = function() { if (!currentActiveMfsAccount) { alert("No active MFS account to download."); return; } let accNo = currentActiveMfsAccount; let wb = XLSX.utils.book_new(); let sendTable = document.getElementById('mfsSendTable'); let wsSend = XLSX.utils.table_to_sheet(sendTable); XLSX.utils.book_append_sheet(wb, wsSend, "Outgoing"); let recvTable = document.getElementById('mfsReceiveTable'); let wsRecv = XLSX.utils.table_to_sheet(recvTable); XLSX.utils.book_append_sheet(wb, wsRecv, "Incoming"); XLSX.writeFile(wb, `MFS_Report_${accNo}.xlsx`); }
 
     // ==================== BTS MODULE LOGIC ====================
-    let btsMap = null;
-    let btsMapLayerGroup = null;
-    let btsGlobalResults = [];
-    let btsCurrentMapData = [];
-    let dbBTS;
-
+    let btsMap = null; let btsMapLayerGroup = null; let btsGlobalResults = []; let btsCurrentMapData = []; let dbBTS;
     const request = indexedDB.open("BTS_Local_DB", 1);
-    request.onupgradeneeded = function(e) {
-        let db = e.target.result;
-        if (!db.objectStoreNames.contains("bts_records")) {
-            let store = db.createObjectStore("bts_records", { keyPath: "id" });
-            store.createIndex("lac", "lac", { unique: false });
-            store.createIndex("cell", "cell", { unique: false });
-        }
-    };
+    request.onupgradeneeded = function(e) { let db = e.target.result; if (!db.objectStoreNames.contains("bts_records")) { let store = db.createObjectStore("bts_records", { keyPath: "id" }); store.createIndex("lac", "lac", { unique: false }); store.createIndex("cell", "cell", { unique: false }); } };
     request.onsuccess = function(e) { dbBTS = e.target.result; };
     request.onerror = function(e) { console.error("IndexedDB Error:", e.target.error); };
+    window.toggleBtsInputs = function() { let mode = document.getElementById('btsSearchMode').value; document.getElementById('btsInputs_lac_cell').style.display = mode === 'lac_cell' ? 'flex' : 'none'; document.getElementById('btsInputs_cell_only').style.display = mode === 'cell_only' ? 'block' : 'none'; document.getElementById('btsInputs_lat_lon').style.display = mode === 'lat_lon' ? 'flex' : 'none'; document.getElementById('btsInputs_raw_cdr').style.display = mode === 'raw_cdr' ? 'block' : 'none'; }
+    window.handleBtsFileUpload = async function(event) { const files = Array.from(event.target.files); if (!files.length) return; const operator = document.getElementById('btsUploadOp').value; const techCheckboxes = document.querySelectorAll('input[name="btsUploadTech"]:checked'); const selectedTech = Array.from(techCheckboxes).map(cb => cb.value); if (selectedTech.length === 0) { alert("Please select at least one Technology (2G/3G/4G/5G) before uploading."); event.target.value = ''; return; } const statusDiv = document.getElementById('btsUploadStatus'); statusDiv.style.color = '#f59e0b'; statusDiv.innerText = `Reading ${files.length} file(s)... Please wait.`; let totalSaved = 0; let filesProcessed = 0; for (const file of files) { const reader = new FileReader(); reader.onload = async function(e) { try { const data = new Uint8Array(e.target.result); const workbook = XLSX.read(data, {type: 'array'}); const firstSheet = workbook.Sheets[workbook.SheetNames[0]]; let rawRows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: "" }); let headerRowIndex = 0; for (let i = 0; i < Math.min(rawRows.length, 10); i++) { let rowStr = rawRows[i].join(" ").toLowerCase(); if (rowStr.includes('lac') || rowStr.includes('cell') || rowStr.includes('ci')) { headerRowIndex = i; break; } } const rows = XLSX.utils.sheet_to_json(firstSheet, { range: headerRowIndex, defval: "" }); if (rows.length === 0) { console.warn("File empty:", file.name); filesProcessed++; return; } let tx = dbBTS.transaction("bts_records", "readwrite"); let store = tx.objectStore("bts_records"); for (let i = 0; i < rows.length; i++) { const row = rows[i]; let rowData = {}; for(let key in row) { rowData[key.trim().toLowerCase()] = row[key]; } const getValidVal = (keys) => { for (let k of keys) { if (rowData[k] !== undefined && rowData[k] !== null && String(rowData[k]).trim() !== "") { return String(rowData[k]).trim(); } } return null; }; const rawLac = getValidVal(['lac', 'lac/tac', 'lac / tal', 'tac', 'enodebid', 'enode id', 'site code']); const rawCell = getValidVal(['cellid', 'cell id', 'cell_id', 'ci', 'ci /tac', 'eutrancellid', 'cell code']); const rawLat = getValidVal(['latitude', 'lat']); const rawLon = getValidVal(['longitude', 'lon', 'long']); const rawAz = getValidVal(['direction', 'orientation', 'azimuth', 'antenna direction']); const rawAddr = getValidVal(['address', 'site address', 'full address', 'place']); let latNum = parseFloat(rawLat); let lonNum = parseFloat(rawLon); if (!isNaN(latNum) && !isNaN(lonNum) && latNum > 80 && lonNum < 30) { let temp = latNum; latNum = lonNum; lonNum = temp; } let lacVal = parseInt(rawLac) || rawLac; let cellVal = rawCell; if (typeof rawCell === 'string' && isNaN(Number(rawCell))) cellVal = rawCell.toString().trim(); else cellVal = parseInt(rawCell) || 0; if (lacVal && cellVal) { let record = { id: `${operator}_${lacVal}_${cellVal}`, operator: operator, tech: selectedTech.join(', '), lac: lacVal, cell: cellVal, lat: isNaN(latNum) ? 0 : latNum, lon: isNaN(lonNum) ? 0 : lonNum, azimuth: parseFloat(rawAz) || 0, address: rawAddr ? rawAddr.toString() : "" }; store.put(record); totalSaved++; } } tx.oncomplete = function() { filesProcessed++; statusDiv.innerText = `Processed ${filesProcessed}/${files.length} files. Total records saved: ${totalSaved}`; if (filesProcessed === files.length) { statusDiv.style.color = '#10b981'; statusDiv.innerText = `✅ Successfully saved ${totalSaved} BTS records locally!`; event.target.value = ''; } }; } catch (error) { console.error("Upload error: ", error); filesProcessed++; } }; reader.readAsArrayBuffer(file); } }
+    window.processBtsSearch = async function() { const mode = document.getElementById('btsSearchMode').value; const operatorFilter = document.getElementById('btsOperatorSelect').value; let targets = []; if (mode === 'lac_cell') { let lac = document.getElementById('btsInputLac').value.trim(); let cell = document.getElementById('btsInputCell').value.trim(); if(!lac || !cell) { showBtsError("Please enter both LAC and Cell ID."); return; } targets.push({ lac: lac, cell: cell, lat: null, lon: null, az: 0, address: null }); } else if (mode === 'cell_only') { let cell = document.getElementById('btsInputCellOnly').value.trim(); if(!cell) { showBtsError("Please enter Cell ID."); return; } targets.push({ lac: null, cell: cell, lat: null, lon: null, az: 0, address: null }); } else if (mode === 'lat_lon') { let lat = document.getElementById('btsInputLat').value.trim(); let lon = document.getElementById('btsInputLon').value.trim(); if(!lat || !lon) { showBtsError("Please enter both Latitude and Longitude."); return; } targets.push({ lac: null, cell: null, lat: lat, lon: lon, az: 0, address: null }); } else if (mode === 'raw_cdr') { let rawText = document.getElementById('btsRawInput').value.trim(); if(!rawText) { showBtsError("Please paste CDR Logs or Raw Text."); return; } targets = parseBtsCDRText(rawText); } document.getElementById('btsErrorMsg').style.display = 'none'; document.getElementById('btsResultBody').innerHTML = ''; document.getElementById('btsTableContainer').style.display = 'block'; document.getElementById('btsMapContainer').style.display = 'none'; btsGlobalResults = []; btsCurrentMapData = []; let counter = 1; let tx = dbBTS.transaction("bts_records", "readonly"); let store = tx.objectStore("bts_records"); for (let i = 0; i < targets.length; i++) { const t = targets[i]; let foundData = null; let foundOp = ""; if (mode === 'lat_lon') { foundData = { lat: parseFloat(t.lat), lon: parseFloat(t.lon), azimuth: 0, address: "Direct Coordinate Input" }; foundOp = "N/A"; } else { const getRecord = (op, lac, cell) => { return new Promise((resolve) => { const req = store.get(`${op}_${lac}_${cell}`); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(null); }); }; if (operatorFilter === "Auto-Detect") { const ops = ["Grameenphone", "Robi", "Banglalink", "Teletalk"]; for (const op of ops) { if(mode === 'lac_cell') foundData = await getRecord(op, t.lac, t.cell); else if (mode === 'cell_only') { foundData = await new Promise(resolve => { const req = store.index("cell").getAll(t.cell); req.onsuccess = () => resolve(req.result.length > 0 ? req.result[0] : null); req.onerror = () => resolve(null); }); } if (foundData) { foundOp = op; break; } } } else { if(mode === 'lac_cell') foundData = await getRecord(operatorFilter, t.lac, t.cell); else if (mode === 'cell_only') { foundData = await new Promise(resolve => { const req = store.index("cell").getAll(t.cell); req.onsuccess = () => resolve(req.result.length > 0 ? req.result.find(r => r.operator === operatorFilter) : null); req.onerror = () => resolve(null); }); } if (foundData) foundOp = operatorFilter; } } let techDisplay = foundData ? (foundData.tech || "") : ""; let finalLat = foundData ? foundData.lat : t.lat; let finalLon = foundData ? foundData.lon : t.lon; let finalAz = foundData ? (foundData.azimuth || 0) : (t.az || 0); let finalAddr = foundData ? foundData.address : t.address; let finalLac = foundData ? foundData.lac : t.lac; let finalCell = foundData ? foundData.cell : t.cell; const tr = document.createElement('tr'); tr.innerHTML = `<td>${counter}</td><td class="highlight-green">${foundData ? foundOp : 'Unknown'} <br><span style="font-size:10px;color:#94a3b8">${techDisplay}</span></td><td>${finalLac || '-'}</td><td>${finalCell || '-'}</td><td class="highlight-green">${finalAz}°</td><td>${finalLat || 'N/A'}</td><td>${finalLon || 'N/A'}</td><td class="bts-dist-col" id="bts-dist-${counter}" style="color: #f59e0b; font-weight: bold;">-</td><td class="highlight-orange">${finalAddr || 'No Address'}</td><td><button class="btn btn-info" style="padding: 4px 8px; font-size: 11px; margin: 0;" onclick="zoomToBtsLocation(${finalLat}, ${finalLon})">Map</button></td>`; document.getElementById('btsResultBody').appendChild(tr); if(finalLat && finalLon && finalLat != 0) { btsCurrentMapData.push({ lat: parseFloat(finalLat), lon: parseFloat(finalLon), az: parseFloat(finalAz), addr: finalAddr, op: foundData ? foundOp : "Unknown" }); } btsGlobalResults.push({ "SL": counter, "Provider": foundData ? foundOp : "Unknown", "Tech": techDisplay, "LAC/TAC": finalLac, "Cell ID": finalCell, "Azimuth": finalAz, "Latitude": finalLat, "Longitude": finalLon, "Address": finalAddr }); counter++; } if(btsCurrentMapData.length > 0) { document.getElementById('btnShowBtsMap').style.display = 'inline-block'; } else { showBtsError("No geographic coordinates found in the data."); } }
+    function parseBtsCDRText(text) { let results = []; const blocks = text.split(/\n\s*\n/); blocks.forEach(block => { let item = { lac: null, cell: null, lat: null, lon: null, az: 0, address: null }; const lacMatch = block.match(/(?:LAC|LAC\/TAC|LAC \/ TAL)[\s:]*([0-9]+)/i); const cellMatch = block.match(/(?:Cell ID|CellID|CI|CI \/TAC)[\s:]*([0-9]+)/i); const latMatch = block.match(/Latitude[\s:]*([0-9.-]+)/i); const lonMatch = block.match(/Longitude[\s:]*([0-9.-]+)/i); const addrMatch = block.match(/(?:Address|Site ADDRESS|Full Address|Place)[\s:]*([^\n]+)/i); if (lacMatch) item.lac = lacMatch[1].trim(); if (cellMatch) item.cell = cellMatch[1].trim(); if (latMatch) item.lat = latMatch[1].trim(); if (lonMatch) item.lon = lonMatch[1].trim(); if (addrMatch) item.address = addrMatch[1].trim(); if(item.lac || item.lat) results.push(item); }); return results; }
+    function showBtsError(msg) { const err = document.getElementById('btsErrorMsg'); err.innerText = msg; err.style.display = 'block'; }
+    window.clearBtsInputs = function() { document.getElementById('btsInputLac').value = ''; document.getElementById('btsInputCell').value = ''; document.getElementById('btsInputCellOnly').value = ''; document.getElementById('btsInputLat').value = ''; document.getElementById('btsInputLon').value = ''; document.getElementById('btsRawInput').value = ''; document.getElementById('btsTableContainer').style.display = 'none'; document.getElementById('btsMapContainer').style.display = 'none'; document.getElementById('btsErrorMsg').style.display = 'none'; document.getElementById('btnShowBtsMap').style.display = 'none'; }
+    window.showBtsFullMap = function() { document.getElementById('btsMapContainer').style.display = 'block'; setTimeout(() => { if (!btsMap) { btsMap = L.map('bts-map').setView([23.8103, 90.4125], 7); L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap &copy; CARTO' }).addTo(btsMap); } btsMap.invalidateSize(); if(btsMapLayerGroup) btsMap.removeLayer(btsMapLayerGroup); btsMapLayerGroup = L.layerGroup().addTo(btsMap); const data = btsCurrentMapData; if(!data || data.length === 0) return; let latLngs = []; data.forEach((point) => { const lat = point.lat, lon = point.lon; latLngs.push([lat, lon]); L.circleMarker([lat, lon], { radius: 8, fillColor: "#3b82f6", color: "#fff", weight: 2, fillOpacity: 0.9 }).addTo(btsMapLayerGroup).bindPopup(`<b>${point.op}</b><br>${point.addr}<br>Azimuth: ${point.az}°`); if (point.az && point.az != 0) { const center = turf.point([lon, lat]); const sectorPolygon = turf.sector(center, 0.3, point.az - 35, point.az + 35, {units: 'kilometers'}); L.geoJSON(sectorPolygon, { style: { color: '#10b981', weight: 1, fillColor: '#10b981', fillOpacity: 0.2 } }).addTo(btsMapLayerGroup); } }); if (latLngs.length > 1) { L.polyline(latLngs, { color: '#f59e0b', dashArray: '5, 10', weight: 2 }).addTo(btsMapLayerGroup); for (let i = 0; i < latLngs.length - 1; i++) { const p1 = turf.point([latLngs[i][1], latLngs[i][0]]); const p2 = turf.point([latLngs[i+1][1], latLngs[i+1][0]]); const dist = turf.distance(p1, p2, {units: 'kilometers'}).toFixed(2); document.getElementById(`bts-dist-${i+2}`).innerText = `+ ${dist} km`; const midpoint = turf.midpoint(p1, p2); L.marker([midpoint.geometry.coordinates[1], midpoint.geometry.coordinates[0]], { icon: L.divIcon({ className: 'custom-div-icon', html: `<div style='background-color:#0f172a; color:#f59e0b; padding:3px 6px; border-radius:4px; border:1px solid #f59e0b; font-size:11px; font-weight:bold;'>${dist} km</div>`, iconSize: [50, 20], iconAnchor: [25, 10] }) }).addTo(btsMapLayerGroup); } } if (latLngs.length > 0) btsMap.fitBounds(L.latLngBounds(latLngs), { padding: [50, 50] }); }, 300); }
+    window.zoomToBtsLocation = function(lat, lon) { if(!lat || !lon) return; showBtsFullMap(); btsMap.setView([lat, lon], 16); }
+    window.exportBtsToExcel = function() { if (btsGlobalResults.length === 0) { alert("No data to export!"); return; } const ws = XLSX.utils.json_to_sheet(btsGlobalResults); const wscols = [{wch: 5}, {wch: 15}, {wch: 10}, {wch: 12}, {wch: 15}, {wch: 10}, {wch: 12}, {wch: 12}, {wch: 50}]; ws['!cols'] = wscols; const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "BTS_Search_Results"); XLSX.writeFile(wb, "BTS_Search_Results.xlsx"); }
 
-    window.toggleBtsInputs = function() {
-        let mode = document.getElementById('btsSearchMode').value;
-        document.getElementById('btsInputs_lac_cell').style.display = mode === 'lac_cell' ? 'flex' : 'none';
-        document.getElementById('btsInputs_cell_only').style.display = mode === 'cell_only' ? 'block' : 'none';
-        document.getElementById('btsInputs_lat_lon').style.display = mode === 'lat_lon' ? 'flex' : 'none';
-        document.getElementById('btsInputs_raw_cdr').style.display = mode === 'raw_cdr' ? 'block' : 'none';
-    }
+    // ==================== TOWER DUMP MODULE LOGIC (SESSION ONLY) ====================
+    let tdSessionGroups = {}; 
+    let tdFileQueue = [];
+    let tdCurrentMappingFileIndex = -1;
+    let tdLastComparisonGroupedData = null; 
 
-    window.handleBtsFileUpload = async function(event) {
-        const files = Array.from(event.target.files);
-        if (!files.length) return;
-        const operator = document.getElementById('btsUploadOp').value;
-        const techCheckboxes = document.querySelectorAll('input[name="btsUploadTech"]:checked');
-        const selectedTech = Array.from(techCheckboxes).map(cb => cb.value);
-        if (selectedTech.length === 0) { alert("Please select at least one Technology (2G/3G/4G/5G) before uploading."); event.target.value = ''; return; }
-        const statusDiv = document.getElementById('btsUploadStatus');
-        statusDiv.style.color = '#f59e0b';
-        statusDiv.innerText = `Reading ${files.length} file(s)... Please wait.`;
-        let totalSaved = 0;
-        let filesProcessed = 0;
-
-        for (const file of files) {
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, {type: 'array'});
-                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                    let rawRows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: "" });
-                    let headerRowIndex = 0;
-                    for (let i = 0; i < Math.min(rawRows.length, 10); i++) {
-                        let rowStr = rawRows[i].join(" ").toLowerCase();
-                        if (rowStr.includes('lac') || rowStr.includes('cell') || rowStr.includes('ci')) { headerRowIndex = i; break; }
-                    }
-                    const rows = XLSX.utils.sheet_to_json(firstSheet, { range: headerRowIndex, defval: "" });
-                    if (rows.length === 0) { console.warn("File empty:", file.name); filesProcessed++; return; }
-
-                    let tx = dbBTS.transaction("bts_records", "readwrite");
-                    let store = tx.objectStore("bts_records");
-                    
-                    for (let i = 0; i < rows.length; i++) {
-                        const row = rows[i];
-                        let rowData = {};
-                        for(let key in row) { rowData[key.trim().toLowerCase()] = row[key]; }
-                        const getValidVal = (keys) => { for (let k of keys) { if (rowData[k] !== undefined && rowData[k] !== null && String(rowData[k]).trim() !== "") { return String(rowData[k]).trim(); } } return null; };
-                        
-                        const rawLac = getValidVal(['lac', 'lac/tac', 'lac / tal', 'tac', 'enodebid', 'enode id', 'site code']);
-                        const rawCell = getValidVal(['cellid', 'cell id', 'cell_id', 'ci', 'ci /tac', 'eutrancellid', 'cell code']);
-                        const rawLat = getValidVal(['latitude', 'lat']);
-                        const rawLon = getValidVal(['longitude', 'lon', 'long']);
-                        const rawAz = getValidVal(['direction', 'orientation', 'azimuth', 'antenna direction']);
-                        const rawAddr = getValidVal(['address', 'site address', 'full address', 'place']);
-
-                        let latNum = parseFloat(rawLat);
-                        let lonNum = parseFloat(rawLon);
-                        if (!isNaN(latNum) && !isNaN(lonNum) && latNum > 80 && lonNum < 30) { let temp = latNum; latNum = lonNum; lonNum = temp; }
-                        let lacVal = parseInt(rawLac) || rawLac;
-                        let cellVal = rawCell;
-                        if (typeof rawCell === 'string' && isNaN(Number(rawCell))) cellVal = rawCell.toString().trim();
-                        else cellVal = parseInt(rawCell) || 0;
-
-                        if (lacVal && cellVal) {
-                            let record = { id: `${operator}_${lacVal}_${cellVal}`, operator: operator, tech: selectedTech.join(', '), lac: lacVal, cell: cellVal, lat: isNaN(latNum) ? 0 : latNum, lon: isNaN(lonNum) ? 0 : lonNum, azimuth: parseFloat(rawAz) || 0, address: rawAddr ? rawAddr.toString() : "" };
-                            store.put(record); 
-                            totalSaved++;
-                        }
-                    }
-                    tx.oncomplete = function() {
-                        filesProcessed++;
-                        statusDiv.innerText = `Processed ${filesProcessed}/${files.length} files. Total records saved: ${totalSaved}`;
-                        if (filesProcessed === files.length) { statusDiv.style.color = '#10b981'; statusDiv.innerText = `✅ Successfully saved ${totalSaved} BTS records locally!`; event.target.value = ''; }
-                    };
-                } catch (error) { console.error("Upload error: ", error); filesProcessed++; }
-            };
-            reader.readAsArrayBuffer(file);
+    window.resetTowerDumpSession = function() {
+        if(confirm("Are you sure you want to reset the Tower Dump session? All loaded data will be lost.")) {
+            tdSessionGroups = {}; 
+            tdFileQueue = [];
+            tdLastComparisonGroupedData = null;
+            document.getElementById('tdFileQueue').innerHTML = '<div style="padding: 15px; text-align: center; color: #9ca3af;">No files added yet.</div>';
+            document.getElementById('tdLoadedList').innerHTML = '';
+            document.getElementById('tdLocationSuggestions').innerHTML = '';
+            document.getElementById('tdResultsArea').style.display = 'none';
+            document.getElementById('tdMappingArea').style.display = 'none';
+            document.getElementById('tdDetailsModal').style.display = 'none';
+            document.getElementById('tdFileInput').value = '';
         }
     }
 
-    window.processBtsSearch = async function() {
-        const mode = document.getElementById('btsSearchMode').value;
-        const operatorFilter = document.getElementById('btsOperatorSelect').value;
+    window.switchTdTab = function(tab, btn) {
+        document.querySelectorAll('#towerDumpAnalyzerModuleContainer .tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('#towerDumpAnalyzerModuleContainer .tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('td-tab-' + tab).classList.add('active');
+        if(tab === 'compare') updateTdCompareTab();
+    }
+
+    window.toggleTdCompareMode = function() {
+        const mode = document.getElementById('tdCompareMode').value;
+        document.getElementById('tdKGroup').style.display = (mode === 'AT_LEAST_K') ? 'block' : 'none';
+        document.getElementById('tdMultiSelectGroup').style.display = (mode === 'PAIRWISE') ? 'none' : 'block';
+        document.getElementById('tdPairwiseGroup').style.display = (mode === 'PAIRWISE') ? 'block' : 'none';
+    }
+
+    window.clearTdDateTimeFilter = function() {
+        document.getElementById('tdFilterFromDate').value = '';
+        document.getElementById('tdFilterToDate').value = '';
+    }
+
+    window.handleTdFileSelect = function(event) {
+        const files = event.target.files;
+        for (let file of files) { tdFileQueue.push(file); }
+        renderTdFileQueue();
+        event.target.value = ''; 
+    }
+
+    function renderTdFileQueue() {
+        const queueDiv = document.getElementById('tdFileQueue');
+        if (tdFileQueue.length === 0) {
+            queueDiv.innerHTML = '<div style="padding: 15px; text-align: center; color: #9ca3af;">No files added yet.</div>';
+            return;
+        }
+        queueDiv.innerHTML = '';
+        tdFileQueue.forEach((file, index) => {
+            const item = document.createElement('div');
+            item.style = 'display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; border-bottom: 1px solid rgba(255,255,255,0.05);';
+            item.innerHTML = `
+                <span><i class="fa-solid fa-file-excel" style="color:#10b981; margin-right:10px;"></i> ${file.name}</span>
+                <button class="btn btn-primary" style="padding: 5px 10px; font-size: 12px; margin:0; width:auto;" onclick="startTdMapping(${index})">Map Columns</button>
+            `;
+            queueDiv.appendChild(item);
+        });
+    }
+
+    window.startTdMapping = function(index) {
+        tdCurrentMappingFileIndex = index;
+        const file = tdFileQueue[index];
+        document.getElementById('tdCurrentMapFile').innerText = file.name;
         
-        let targets = [];
-        if (mode === 'lac_cell') {
-            let lac = document.getElementById('btsInputLac').value.trim();
-            let cell = document.getElementById('btsInputCell').value.trim();
-            if(!lac || !cell) { showBtsError("Please enter both LAC and Cell ID."); return; }
-            targets.push({ lac: lac, cell: cell, lat: null, lon: null, az: 0, address: null });
-        } else if (mode === 'cell_only') {
-            let cell = document.getElementById('btsInputCellOnly').value.trim();
-            if(!cell) { showBtsError("Please enter Cell ID."); return; }
-            targets.push({ lac: null, cell: cell, lat: null, lon: null, az: 0, address: null });
-        } else if (mode === 'lat_lon') {
-            let lat = document.getElementById('btsInputLat').value.trim();
-            let lon = document.getElementById('btsInputLon').value.trim();
-            if(!lat || !lon) { showBtsError("Please enter both Latitude and Longitude."); return; }
-            targets.push({ lac: null, cell: null, lat: lat, lon: lon, az: 0, address: null });
-        } else if (mode === 'raw_cdr') {
-            let rawText = document.getElementById('btsRawInput').value.trim();
-            if(!rawText) { showBtsError("Please paste CDR Logs or Raw Text."); return; }
-            targets = parseBtsCDRText(rawText);
-        }
+        const datalist = document.getElementById('tdLocationSuggestions');
+        datalist.innerHTML = '';
+        Object.keys(tdSessionGroups).forEach(group => {
+            datalist.innerHTML += `<option value="${group}">`;
+        });
 
-        document.getElementById('btsErrorMsg').style.display = 'none';
-        document.getElementById('btsResultBody').innerHTML = '';
-        document.getElementById('btsTableContainer').style.display = 'block';
-        document.getElementById('btsMapContainer').style.display = 'none';
-        btsGlobalResults = [];
-        btsCurrentMapData = [];
-        let counter = 1;
-
-        let tx = dbBTS.transaction("bts_records", "readonly");
-        let store = tx.objectStore("bts_records");
-
-        for (let i = 0; i < targets.length; i++) {
-            const t = targets[i];
-            let foundData = null;
-            let foundOp = "";
-            
-            if (mode === 'lat_lon') {
-                foundData = { lat: parseFloat(t.lat), lon: parseFloat(t.lon), azimuth: 0, address: "Direct Coordinate Input" };
-                foundOp = "N/A";
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const data = e.target.result;
+            if (file.name.endsWith('.csv')) {
+                Papa.parse(data, {
+                    header: true, preview: 1,
+                    complete: function(results) { renderTdMappingSelectors(results.meta.fields); }
+                });
             } else {
-                const getRecord = (op, lac, cell) => { return new Promise((resolve) => { const req = store.get(`${op}_${lac}_${cell}`); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(null); }); };
-                
-                if (operatorFilter === "Auto-Detect") {
-                    const ops = ["Grameenphone", "Robi", "Banglalink", "Teletalk"];
-                    for (const op of ops) { 
-                        if(mode === 'lac_cell') foundData = await getRecord(op, t.lac, t.cell);
-                        else if (mode === 'cell_only') {
-                            foundData = await new Promise(resolve => {
-                                const req = store.index("cell").getAll(t.cell);
-                                req.onsuccess = () => resolve(req.result.length > 0 ? req.result[0] : null);
-                                req.onerror = () => resolve(null);
-                            });
-                        }
-                        if (foundData) { foundOp = op; break; } 
-                    }
-                } else { 
-                    if(mode === 'lac_cell') foundData = await getRecord(operatorFilter, t.lac, t.cell); 
-                    else if (mode === 'cell_only') {
-                        foundData = await new Promise(resolve => {
-                            const req = store.index("cell").getAll(t.cell);
-                            req.onsuccess = () => resolve(req.result.length > 0 ? req.result.find(r => r.operator === operatorFilter) : null);
-                            req.onerror = () => resolve(null);
-                        });
-                    }
-                    if (foundData) foundOp = operatorFilter; 
+                const workbook = XLSX.read(data, {type: 'array'});
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const json = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+                if(json.length > 0) renderTdMappingSelectors(json[0]);
+            }
+        };
+        if(file.name.endsWith('.csv')) reader.readAsText(file);
+        else reader.readAsArrayBuffer(file);
+    }
+
+    function renderTdMappingSelectors(headers) {
+        const container = document.getElementById('tdColumnSelectors');
+        container.innerHTML = '';
+        
+        const FIELD_SYNONYMS = {
+            date: ["date", "call_date"], time: ["time", "call_time"],
+            a_party: ["a party", "a_party", "calling", "caller", "a-party", "from"],
+            b_party: ["b party", "b_party", "called", "callee", "b-party", "to"],
+            call_type: ["call type", "call_type", "type", "service"],
+            lac: ["lac", "location_area"], cell_id: ["cell", "cell_id", "cellid", "cid"],
+            imei: ["imei"]
+        };
+        
+        const fields = ["date", "time", "a_party", "b_party", "call_type", "lac", "cell_id", "imei"];
+        
+        fields.forEach(field => {
+            const group = document.createElement('div');
+            
+            let guessed = "";
+            for(let h of headers) {
+                if(FIELD_SYNONYMS[field] && FIELD_SYNONYMS[field].some(s => h.toLowerCase().includes(s))) {
+                    guessed = h; break;
                 }
             }
 
-            let techDisplay = foundData ? (foundData.tech || "") : "";
-            let finalLat = foundData ? foundData.lat : t.lat;
-            let finalLon = foundData ? foundData.lon : t.lon;
-            let finalAz = foundData ? (foundData.azimuth || 0) : (t.az || 0);
-            let finalAddr = foundData ? foundData.address : t.address;
-            let finalLac = foundData ? foundData.lac : t.lac;
-            let finalCell = foundData ? foundData.cell : t.cell;
+            let options = `<option value="">-- Ignore --</option>`;
+            headers.forEach(h => {
+                options += `<option value="${h}" ${h === guessed ? 'selected' : ''}>${h}</option>`;
+            });
 
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${counter}</td><td class="highlight-green">${foundData ? foundOp : 'Unknown'} <br><span style="font-size:10px;color:#94a3b8">${techDisplay}</span></td><td>${finalLac || '-'}</td><td>${finalCell || '-'}</td><td class="highlight-green">${finalAz}°</td><td>${finalLat || 'N/A'}</td><td>${finalLon || 'N/A'}</td><td class="bts-dist-col" id="bts-dist-${counter}" style="color: #f59e0b; font-weight: bold;">-</td><td class="highlight-orange">${finalAddr || 'No Address'}</td><td><button class="btn btn-info" style="padding: 4px 8px; font-size: 11px; margin: 0;" onclick="zoomToBtsLocation(${finalLat}, ${finalLon})">Map</button></td>`;
-            document.getElementById('btsResultBody').appendChild(tr);
+            group.innerHTML = `
+                <label style="color:#93c5fd;">${field.toUpperCase().replace('_', ' ')}</label>
+                <select class="form-control td-map-select" data-field="${field}" style="background: rgba(11,15,25,0.6); color:white; border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; width: 100%;">${options}</select>
+            `;
+            container.appendChild(group);
+        });
 
-            if(finalLat && finalLon && finalLat != 0) { btsCurrentMapData.push({ lat: parseFloat(finalLat), lon: parseFloat(finalLon), az: parseFloat(finalAz), addr: finalAddr, op: foundData ? foundOp : "Unknown" }); }
-            btsGlobalResults.push({ "SL": counter, "Provider": foundData ? foundOp : "Unknown", "Tech": techDisplay, "LAC/TAC": finalLac, "Cell ID": finalCell, "Azimuth": finalAz, "Latitude": finalLat, "Longitude": finalLon, "Address": finalAddr });
-            counter++;
+        document.getElementById('tdMappingArea').style.display = 'block';
+    }
+
+    window.confirmTdMapping = function() {
+        const loc = document.getElementById('tdMapLocation').value.trim();
+        const timeSplit = document.getElementById('tdAutoTimeSplit').value;
+        
+        if(!loc) { alert("Please provide a Group Name."); return; }
+
+        const mapping = {};
+        document.querySelectorAll('.td-map-select').forEach(sel => {
+            if(sel.value) mapping[sel.dataset.field] = sel.value;
+        });
+
+        if(!mapping.a_party && !mapping.imei) { alert("You must map at least A-Party or IMEI."); return; }
+        if(timeSplit !== 'none' && (!mapping.date || !mapping.time)) { 
+            alert("To Auto-Split by Time, you must map Date and Time columns."); 
+            return; 
         }
-        if(btsCurrentMapData.length > 0) { document.getElementById('btnShowBtsMap').style.display = 'inline-block'; } else { showBtsError("No geographic coordinates found in the data."); }
+
+        document.getElementById('tdMappingArea').style.display = 'none';
+        document.getElementById('tdLoadLoader').style.display = 'block';
+
+        const file = tdFileQueue[tdCurrentMappingFileIndex];
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            const data = e.target.result;
+            let jsonData = [];
+
+            if (file.name.endsWith('.csv')) {
+                Papa.parse(data, {
+                    header: true, skipEmptyLines: true,
+                    complete: function(results) { processAndSaveTdData(results.data, mapping, loc, timeSplit, file.name); }
+                });
+            } else {
+                const workbook = XLSX.read(data, {type: 'array'});
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                processAndSaveTdData(jsonData, mapping, loc, timeSplit, file.name);
+            }
+        };
+        if(file.name.endsWith('.csv')) reader.readAsText(file);
+        else reader.readAsArrayBuffer(file);
     }
 
-    function parseBtsCDRText(text) { let results = []; const blocks = text.split(/\n\s*\n/); blocks.forEach(block => { let item = { lac: null, cell: null, lat: null, lon: null, az: 0, address: null }; const lacMatch = block.match(/(?:LAC|LAC\/TAC|LAC \/ TAL)[\s:]*([0-9]+)/i); const cellMatch = block.match(/(?:Cell ID|CellID|CI|CI \/TAC)[\s:]*([0-9]+)/i); const latMatch = block.match(/Latitude[\s:]*([0-9.-]+)/i); const lonMatch = block.match(/Longitude[\s:]*([0-9.-]+)/i); const addrMatch = block.match(/(?:Address|Site ADDRESS|Full Address|Place)[\s:]*([^\n]+)/i); if (lacMatch) item.lac = lacMatch[1].trim(); if (cellMatch) item.cell = cellMatch[1].trim(); if (latMatch) item.lat = latMatch[1].trim(); if (lonMatch) item.lon = lonMatch[1].trim(); if (addrMatch) item.address = addrMatch[1].trim(); if(item.lac || item.lat) results.push(item); }); return results; }
-    function showBtsError(msg) { const err = document.getElementById('btsErrorMsg'); err.innerText = msg; err.style.display = 'block'; }
-    window.clearBtsInputs = function() { 
-        document.getElementById('btsInputLac').value = ''; document.getElementById('btsInputCell').value = ''; 
-        document.getElementById('btsInputCellOnly').value = ''; document.getElementById('btsInputLat').value = ''; document.getElementById('btsInputLon').value = '';
-        document.getElementById('btsRawInput').value = ''; 
-        document.getElementById('btsTableContainer').style.display = 'none'; document.getElementById('btsMapContainer').style.display = 'none'; document.getElementById('btsErrorMsg').style.display = 'none'; document.getElementById('btnShowBtsMap').style.display = 'none'; 
+    function processAndSaveTdData(rawData, mapping, loc, timeSplit, fileName) {
+        const processedGroups = {};
+
+        rawData.forEach(row => {
+            let groupName = loc;
+            
+            if(timeSplit !== 'none') {
+                const dateStr = mapping.date ? String(row[mapping.date] || '').trim() : '';
+                const timeStr = mapping.time ? String(row[mapping.time] || '').trim() : '';
+                
+                if(dateStr && timeStr) {
+                    const timeParts = timeStr.split(':');
+                    if(timeParts.length >= 2) {
+                        const hh = parseInt(timeParts[0], 10);
+                        const mm = parseInt(timeParts[1], 10);
+                        const mins = parseInt(timeSplit, 10);
+                        
+                        let blockStartMin = Math.floor(mm / mins) * mins;
+                        let blockEndMin = blockStartMin + mins - 1;
+                        if(blockEndMin >= 60) blockEndMin = 59; 
+                        
+                        const startStr = String(hh).padStart(2, '0') + ':' + String(blockStartMin).padStart(2, '0');
+                        const endStr = String(hh).padStart(2, '0') + ':' + String(blockEndMin).padStart(2, '0');
+                        
+                        groupName = `${loc} (${startStr}-${endStr})`;
+                    }
+                }
+            }
+
+            if(!processedGroups[groupName]) processedGroups[groupName] = [];
+            
+            processedGroups[groupName].push({
+                _sourceFile: fileName,
+                date: mapping.date ? row[mapping.date] : '',
+                time: mapping.time ? row[mapping.time] : '',
+                a_party: mapping.a_party ? String(row[mapping.a_party] || '').trim() : null,
+                b_party: mapping.b_party ? String(row[mapping.b_party] || '').trim() : null,
+                lac: mapping.lac ? row[mapping.lac] : '',
+                cell_id: mapping.cell_id ? row[mapping.cell_id] : '',
+                imei: mapping.imei ? String(row[mapping.imei] || '').trim() : null
+            });
+        });
+
+        Object.keys(processedGroups).forEach(gName => {
+            if(!tdSessionGroups[gName]) {
+                tdSessionGroups[gName] = [];
+            }
+            tdSessionGroups[gName] = tdSessionGroups[gName].concat(processedGroups[gName]);
+        });
+
+        tdFileQueue.splice(tdCurrentMappingFileIndex, 1);
+        renderTdFileQueue();
+        document.getElementById('tdLoadLoader').style.display = 'none';
+        updateTdLoadedSummary();
+        
+        document.getElementById('tdMapLocation').value = '';
+        document.getElementById('tdAutoTimeSplit').value = 'none';
     }
-    
-    window.showBtsFullMap = function() { 
-        document.getElementById('btsMapContainer').style.display = 'block'; 
-        setTimeout(() => {
-            if (!btsMap) { 
-                btsMap = L.map('bts-map').setView([23.8103, 90.4125], 7); 
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap &copy; CARTO' }).addTo(btsMap); 
-            } 
-            btsMap.invalidateSize(); 
-            
-            if(btsMapLayerGroup) btsMap.removeLayer(btsMapLayerGroup); 
-            btsMapLayerGroup = L.layerGroup().addTo(btsMap); 
-            
-            const data = btsCurrentMapData; 
-            if(!data || data.length === 0) return; 
-            
-            let latLngs = []; 
-            data.forEach((point) => { 
-                const lat = point.lat, lon = point.lon; 
-                latLngs.push([lat, lon]); 
-                L.circleMarker([lat, lon], { radius: 8, fillColor: "#3b82f6", color: "#fff", weight: 2, fillOpacity: 0.9 }).addTo(btsMapLayerGroup).bindPopup(`<b>${point.op}</b><br>${point.addr}<br>Azimuth: ${point.az}°`); 
-                if (point.az && point.az != 0) { 
-                    const center = turf.point([lon, lat]); 
-                    const sectorPolygon = turf.sector(center, 0.3, point.az - 35, point.az + 35, {units: 'kilometers'}); 
-                    L.geoJSON(sectorPolygon, { style: { color: '#10b981', weight: 1, fillColor: '#10b981', fillOpacity: 0.2 } }).addTo(btsMapLayerGroup); 
-                } 
-            }); 
-            if (latLngs.length > 1) { 
-                L.polyline(latLngs, { color: '#f59e0b', dashArray: '5, 10', weight: 2 }).addTo(btsMapLayerGroup); 
-                for (let i = 0; i < latLngs.length - 1; i++) { 
-                    const p1 = turf.point([latLngs[i][1], latLngs[i][0]]); 
-                    const p2 = turf.point([latLngs[i+1][1], latLngs[i+1][0]]); 
-                    const dist = turf.distance(p1, p2, {units: 'kilometers'}).toFixed(2); 
-                    document.getElementById(`bts-dist-${i+2}`).innerText = `+ ${dist} km`; 
-                    const midpoint = turf.midpoint(p1, p2); 
-                    L.marker([midpoint.geometry.coordinates[1], midpoint.geometry.coordinates[0]], { icon: L.divIcon({ className: 'custom-div-icon', html: `<div style='background-color:#0f172a; color:#f59e0b; padding:3px 6px; border-radius:4px; border:1px solid #f59e0b; font-size:11px; font-weight:bold;'>${dist} km</div>`, iconSize: [50, 20], iconAnchor: [25, 10] }) }).addTo(btsMapLayerGroup); 
-                } 
-            } 
-            if (latLngs.length > 0) btsMap.fitBounds(L.latLngBounds(latLngs), { padding: [50, 50] }); 
-        }, 300);
+
+    function updateTdLoadedSummary() {
+        const list = document.getElementById('tdLoadedList');
+        list.innerHTML = '';
+        const sortedGroups = Object.keys(tdSessionGroups).sort();
+        sortedGroups.forEach(groupName => {
+            const li = document.createElement('li');
+            li.style.marginBottom = "5px";
+            li.innerHTML = `<strong>${groupName}</strong> (Total ${tdSessionGroups[groupName].length} records)`;
+            list.appendChild(li);
+        });
     }
-    
-    window.zoomToBtsLocation = function(lat, lon) { if(!lat || !lon) return; showBtsFullMap(); btsMap.setView([lat, lon], 16); }
-    window.exportBtsToExcel = function() { if (btsGlobalResults.length === 0) { alert("No data to export!"); return; } const ws = XLSX.utils.json_to_sheet(btsGlobalResults); const wscols = [{wch: 5}, {wch: 15}, {wch: 10}, {wch: 12}, {wch: 15}, {wch: 10}, {wch: 12}, {wch: 12}, {wch: 50}]; ws['!cols'] = wscols; const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "BTS_Search_Results"); XLSX.writeFile(wb, "BTS_Search_Results.xlsx"); }
+
+    function updateTdCompareTab() {
+        const checkContainer = document.getElementById('tdCompareCheckboxes');
+        const selA = document.getElementById('tdPairwiseA');
+        const selB = document.getElementById('tdPairwiseB');
+        
+        checkContainer.innerHTML = ''; selA.innerHTML = ''; selB.innerHTML = '';
+        
+        const groups = Object.keys(tdSessionGroups).sort();
+        if(groups.length === 0) {
+            checkContainer.innerHTML = '<span style="color:#9ca3af;">No data loaded.</span>';
+            return;
+        }
+
+        groups.forEach((groupName, index) => {
+            const div = document.createElement('label');
+            div.style = "display: flex; align-items: center; gap: 8px; background: #1f2937; padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; color: #f3f4f6; font-size: 12px;";
+            div.innerHTML = `
+                <input type="checkbox" class="td-group-chk" value="${groupName}" checked style="width:auto;">
+                <span>${groupName}</span>
+            `;
+            checkContainer.appendChild(div);
+
+            selA.innerHTML += `<option value="${groupName}">${groupName}</option>`;
+            selB.innerHTML += `<option value="${groupName}">${groupName}</option>`;
+        });
+        if(groups.length > 1) selB.selectedIndex = 1;
+    }
+
+    window.runTdComparison = function() {
+        const mode = document.getElementById('tdCompareMode').value;
+        const targetField = document.getElementById('tdCompareTarget').value;
+        const k = parseInt(document.getElementById('tdKValue').value) || 1;
+        const numType = document.querySelector('input[name="tdNumType"]:checked').value;
+        const operatorFilter = document.getElementById('tdOperatorFilter').value;
+        
+        const filterFrom = document.getElementById('tdFilterFromDate').value;
+        const filterTo = document.getElementById('tdFilterToDate').value;
+        
+        let selectedGroupsToCompare = {};
+
+        if(mode === 'PAIRWISE') {
+            const groupA = document.getElementById('tdPairwiseA').value;
+            const groupB = document.getElementById('tdPairwiseB').value;
+            if(groupA === groupB) { alert("Please select two different groups."); return; }
+            selectedGroupsToCompare[groupA] = tdSessionGroups[groupA];
+            selectedGroupsToCompare[groupB] = tdSessionGroups[groupB];
+        } else {
+            const checkedGroups = Array.from(document.querySelectorAll('.td-group-chk:checked')).map(chk => chk.value);
+            if (checkedGroups.length < 2) { alert("Please select at least 2 groups."); return; }
+            checkedGroups.forEach(g => {
+                selectedGroupsToCompare[g] = tdSessionGroups[g];
+            });
+        }
+
+        document.getElementById('tdCompareLoader').style.display = 'block';
+        document.getElementById('tdResultsArea').style.display = 'none';
+
+        const workerCode = `
+            function normalizeNumber(rawStr, typeFilter) {
+                if (!rawStr) return null;
+                let str = String(rawStr).trim();
+                let num = str.replace(/\\D/g, '');
+                let isIP = false;
+                if ((num.startsWith('096') || num.startsWith('88096')) && num.length >= 9) isIP = true;
+                let isLocal = false;
+                if ((num.length >= 11 && num.startsWith('01')) || (num.length >= 13 && num.startsWith('8801'))) isLocal = true;
+                if (typeFilter === 'ip') return isIP ? str : null;
+                if (typeFilter === 'original') {
+                    if (isLocal) {
+                        if (num.startsWith('880')) return "+" + num;
+                        if (num.startsWith('01')) return "+88" + num;
+                        if (num.startsWith('1') && num.length === 10) return "+880" + num;
+                    }
+                    return null;
+                }
+                if (typeFilter === 'foreign') {
+                    if (!isIP && !isLocal && num.length > 5) return str;
+                    return null;
+                }
+                return null;
+            }
+            function detectOperator(phoneStr) {
+                if (!phoneStr || phoneStr.length < 5) return "Unknown";
+                let num = phoneStr.replace(/\\D/g, '');
+                if (num.startsWith('880')) num = num.substring(3);
+                else if (num.startsWith('0')) num = num.substring(1);
+                if (num.length < 3) return "Unknown";
+                if (num.startsWith('96')) return "VoIP/IP";
+                const prefix = num.substring(0, 2);
+                if (['13', '17'].includes(prefix)) return "GP";
+                if (['14', '19'].includes(prefix)) return "Banglalink";
+                if (['15'].includes(prefix)) return "Teletalk";
+                if (['16', '18'].includes(prefix)) return "Robi";
+                return "Other";
+            }
+            function matchOperatorFilter(operatorName, filter) {
+                if (filter === 'all') return true;
+                const op = operatorName.toLowerCase();
+                if (filter === 'gp' && op.includes('gp')) return true;
+                if (filter === 'robi' && op.includes('robi')) return true;
+                if (filter === 'bl' && op.includes('banglalink')) return true;
+                if (filter === 'gp_robi' && (op.includes('gp') || op.includes('robi'))) return true;
+                if (filter === 'gp_bl' && (op.includes('gp') || op.includes('banglalink'))) return true;
+                if (filter === 'robi_bl' && (op.includes('robi') || op.includes('banglalink'))) return true;
+                return false;
+            }
+            self.onmessage = function(e) {
+                const { groupedDatasets, targetField, mode, k, numType, operatorFilter, filterFrom, filterTo } = e.data;
+                try {
+                    let datasetSets = {};
+                    Object.keys(groupedDatasets).forEach(groupName => {
+                        const set = new Set();
+                        groupedDatasets[groupName].forEach(row => {
+                            if (filterFrom || filterTo) {
+                                const rowDateTimeStr = (row.date || '') + 'T' + (row.time || '');
+                                if (filterFrom && rowDateTimeStr < filterFrom) return;
+                                if (filterTo && rowDateTimeStr > filterTo) return;
+                            }
+                            const rawVal = row[targetField];
+                            const normalizedVal = normalizeNumber(rawVal, numType);
+                            if (normalizedVal) {
+                                if(numType === 'original' && targetField !== 'imei') {
+                                    const op = detectOperator(normalizedVal);
+                                    if(!matchOperatorFilter(op, operatorFilter)) return;
+                                }
+                                set.add(normalizedVal);
+                            }
+                        });
+                        datasetSets[groupName] = { set, name: groupName };
+                    });
+                    const keys = Object.keys(datasetSets);
+                    let results = [];
+                    if (mode === 'INTERSECTION_ALL' || mode === 'AT_LEAST_K') {
+                        const threshold = mode === 'INTERSECTION_ALL' ? keys.length : k;
+                        let countMap = {}; let detailMap = {}; 
+                        keys.forEach(key => {
+                            datasetSets[key].set.forEach(val => {
+                                countMap[val] = (countMap[val] || 0) + 1;
+                                if(!detailMap[val]) detailMap[val] = [];
+                                detailMap[val].push(datasetSets[key].name);
+                            });
+                        });
+                        for (let val in countMap) {
+                            if (countMap[val] >= threshold) {
+                                results.push({ target: val, operator: numType === 'original' ? detectOperator(val) : numType.toUpperCase(), matchCount: countMap[val], details: detailMap[val].join(', ') });
+                            }
+                        }
+                        results.sort((a, b) => b.matchCount - a.matchCount);
+                    } else if (mode === 'PAIRWISE') {
+                        const keyA = keys[0], keyB = keys[1];
+                        const setA = datasetSets[keyA].set; const setB = datasetSets[keyB].set;
+                        let common = [];
+                        setA.forEach(val => { if(setB.has(val)) common.push(val); });
+                        results.push({ pair: datasetSets[keyA].name + " ↔ " + datasetSets[keyB].name, matchCount: common.length, details: common.slice(0, 100).join(', ') + (common.length > 100 ? '...' : '') });
+                    }
+                    self.postMessage({ status: 'success', results: results, mode: mode, targetField: targetField, numType: numType });
+                } catch (error) { self.postMessage({ status: 'error', message: error.message }); }
+            };
+        `;
+
+        const blob = new Blob([workerCode], { type: 'application/javascript' });
+        const worker = new Worker(URL.createObjectURL(blob));
+
+        worker.onmessage = function(e) {
+            if(e.data.status === 'success') {
+                tdLastComparisonGroupedData = selectedGroupsToCompare; 
+                renderTdResults(e.data.results, mode, targetField);
+            } else {
+                alert("Error: " + e.data.message);
+                document.getElementById('tdCompareLoader').style.display = 'none';
+            }
+            worker.terminate();
+        };
+
+        worker.postMessage({ groupedDatasets: selectedGroupsToCompare, targetField: targetField, mode: mode, k: k, numType: numType, operatorFilter: operatorFilter, filterFrom: filterFrom, filterTo: filterTo });
+    }
+
+    function renderTdResults(results, mode, targetField) {
+        document.getElementById('tdCompareLoader').style.display = 'none';
+        document.getElementById('tdResultsArea').style.display = 'flex';
+        
+        const thead = document.getElementById('tdResultHead');
+        const tbody = document.getElementById('tdResultBody');
+        tbody.innerHTML = '';
+
+        if (mode === 'PAIRWISE') {
+            thead.innerHTML = `<tr><th style="padding:10px; text-align:left; background:#1f2937; color:#a78bfa;">Pair</th><th style="padding:10px; text-align:left; background:#1f2937; color:#a78bfa;">Common Count</th><th style="padding:10px; text-align:left; background:#1f2937; color:#a78bfa;">Common Items</th></tr>`;
+            results.forEach(r => {
+                tbody.innerHTML += `<tr>
+                    <td style="padding:10px; border-bottom:1px solid rgba(255,255,255,0.05); color:#a78bfa; font-weight:600;">${r.pair}</td>
+                    <td style="padding:10px; border-bottom:1px solid rgba(255,255,255,0.05);"><span style="background:#10b981; color:white; padding:2px 8px; border-radius:10px; font-size:11px;">${r.matchCount}</span></td>
+                    <td style="padding:10px; border-bottom:1px solid rgba(255,255,255,0.05); font-size:12px;">${r.details}</td>
+                </tr>`;
+            });
+        } else {
+            thead.innerHTML = `<tr><th style="padding:10px; text-align:left; background:#1f2937; color:#a78bfa;">Target</th><th style="padding:10px; text-align:left; background:#1f2937; color:#a78bfa;">Operator</th><th style="padding:10px; text-align:left; background:#1f2937; color:#a78bfa;">Match Count</th><th style="padding:10px; text-align:left; background:#1f2937; color:#a78bfa;">Groups Matched</th></tr>`;
+            results.forEach(r => {
+                let opColor = "var(--text-main)";
+                if(r.operator.includes("GP")) opColor = "#ef4444"; 
+                if(r.operator.includes("Robi")) opColor = "#f59e0b"; 
+                if(r.operator.includes("Banglalink")) opColor = "#f97316"; 
+                if(r.operator.includes("VoIP")) opColor = "#8b5cf6"; 
+
+                let targetHTML = targetField === 'imei' 
+                    ? `<span style="font-family: monospace;">${r.target}</span>`
+                    : `<span style="color: #38bdf8; cursor: pointer; text-decoration: underline; font-weight: 600; font-family: monospace;" onclick="showTdDetails('${r.target}')">${r.target}</span>`;
+
+                tbody.innerHTML += `<tr>
+                    <td style="padding:10px; border-bottom:1px solid rgba(255,255,255,0.05);">${targetHTML}</td>
+                    <td style="padding:10px; border-bottom:1px solid rgba(255,255,255,0.05); color: ${opColor}; font-weight: 600; font-size: 12px;">${r.operator}</td>
+                    <td style="padding:10px; border-bottom:1px solid rgba(255,255,255,0.05);"><span style="background:rgba(139,92,246,0.1); color:#a78bfa; padding:2px 8px; border-radius:10px; font-size:11px;">${r.matchCount}</span></td>
+                    <td style="padding:10px; border-bottom:1px solid rgba(255,255,255,0.05); font-size:12px; color:#9ca3af;">${r.details}</td>
+                </tr>`;
+            });
+        }
+
+        if(results.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#ef4444; padding:20px;">No matches found.</td></tr>`;
+        }
+    }
+
+    window.showTdDetails = function(phoneNumber) {
+        if(!tdLastComparisonGroupedData) return;
+        
+        const tbody = document.getElementById('tdDetailsTableBody');
+        tbody.innerHTML = '';
+        document.getElementById('tdDetailTargetNum').innerText = phoneNumber;
+
+        let foundRecords = 0;
+        
+        Object.keys(tdLastComparisonGroupedData).forEach(groupName => {
+            const records = tdLastComparisonGroupedData[groupName];
+            
+            records.forEach(row => {
+                let matchFound = false;
+                const cleanPhone = phoneNumber.replace('+880', '').replace('+88', '').replace('+', '');
+                
+                if(row.a_party && String(row.a_party).includes(cleanPhone)) matchFound = true;
+                if(row.b_party && String(row.b_party).includes(cleanPhone)) matchFound = true;
+                if(phoneNumber === row.a_party || phoneNumber === row.b_party) matchFound = true;
+
+                if(matchFound) {
+                    foundRecords++;
+                    tbody.innerHTML += `<tr>
+                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.05); color:#a78bfa; font-weight:600;">${groupName}</td>
+                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.05); font-size:11px; color:#9ca3af;">${row._sourceFile || 'N/A'}</td>
+                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.05);">${row.date || '-'}</td>
+                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.05);">${row.time || '-'}</td>
+                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.05);">${row.lac || '-'}</td>
+                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.05);">${row.cell_id || '-'}</td>
+                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.05); font-family:monospace;">${row.a_party || '-'}</td>
+                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.05); font-family:monospace;">${row.b_party || '-'}</td>
+                    </tr>`;
+                }
+            });
+        });
+
+        if(foundRecords === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#f59e0b; padding:20px;">No detailed records found for this number.</td></tr>`;
+        }
+
+        document.getElementById('tdDetailsModal').style.display = 'flex';
+    }
+
+    window.exportTdResults = function() {
+        const table = document.querySelector('#tdResultsArea .data-table');
+        if (!table) return;
+        let csvContent = "";
+        
+        const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.innerText);
+        csvContent += headers.join(",") + "\n";
+
+        const rows = table.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            const cells = Array.from(row.querySelectorAll('td')).map(td => {
+                let text = td.innerText.replace(/"/g, '""'); 
+                return `"${text}"`;
+            });
+            csvContent += cells.join(",") + "\n";
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `Tower_Dump_Results_${new Date().getTime()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
   </script>
 </body>
 </html>
