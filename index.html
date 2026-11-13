@@ -306,7 +306,7 @@
           <div style="background: rgba(31, 41, 55, 0.5); padding: 12px 20px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;"><label style="margin:0; font-size:12px; font-weight:700; color:#93c5fd;">Target:</label><select id="activeTargetDropdown" onchange="switchActiveTarget(this.value)" style="padding:8px 12px; font-weight:600; color:#ffffff; width:180px; background:rgba(11, 15, 25, 0.8); font-size:12px; border-radius:8px;"></select></div>
             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-              <button class="btn btn-primary" style="margin:0; padding:8px 16px; font-size:12px; width:auto;" onclick="savePersistentProfileDB(); alert('Saved successfully!');"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+              <button class="btn btn-primary" style="margin:0; padding:8px 16px; font-size:12px; width:auto;" onclick="window._manualSaveRequested = true; savePersistentProfileDB(); alert('Saved successfully!');"><i class="fa-solid fa-floppy-disk"></i> Save</button>
               <button class="btn btn-secondary" style="margin:0; padding:8px 16px; font-size:12px; width:auto;" onclick="triggerAddMoreFiles()"><i class="fa-solid fa-plus"></i> Add Files</button>
               <input type="file" id="addMoreFileInput" multiple accept=".csv, .xlsx, .xls" style="display:none" onchange="appendMoreCDRFiles(event)">
             </div>
@@ -384,7 +384,7 @@
               <h3 style="margin:0; color:#f3f4f6; font-size:18px;">Profile & Download Hub</h3>
               <div style="display:flex; gap:10px;">
                 <button class="btn btn-success" style="width:auto; padding:10px 18px; font-size:12px;" onclick="downloadProfileReportWordHub()"><i class="fa-solid fa-download"></i> Download Word</button>
-                <button class="btn btn-primary" style="width:auto; padding:10px 18px; font-size:12px;" onclick="savePersistentProfileDB(); alert('Saved successfully!');"><i class="fa-solid fa-floppy-disk"></i> Save Profile</button>
+                <button class="btn btn-primary" style="width:auto; padding:10px 18px; font-size:12px;" onclick="window._manualSaveRequested = true; savePersistentProfileDB(); alert('Saved successfully!');"><i class="fa-solid fa-floppy-disk"></i> Save Profile</button>
                 <button class="btn btn-secondary" style="width:auto; padding:10px 18px; font-size:12px;" onclick="closeSubSection()"><i class="fa-solid fa-arrow-left"></i> Back</button>
               </div>
             </div>
@@ -964,27 +964,27 @@
           </div>
           
           <div>
-            <h2 style="color:#34d399; font-size:22px; font-weight:800; margin-bottom:15px;">ইউজার ম্যানুয়াল ও কার্যপদ্ধতি নির্দেশিকা (বাংলা)</h2>
+            <h2 style="color:#34d399; font-size:22px; font-weight:800; margin-bottom:15px;">ইউজার ম্যানুয়াল ও কার্যপদ্ধতি নির্দেশিকা (বাংলা)</h2>
             
             <h3 style="color:#f3f4f6; font-size:18px; margin-top:20px; font-weight:700;">১. সিডিআর এনালাইজার (CDR Analyser)</h3>
             <p style="font-size: 14px; color:#9ca3af;"><b>সংক্ষিপ্ত বিবরণ:</b> একাধিক অপারেটরের সিডিআর ফাইল আপলোড করে টার্গেটের মুভমেন্ট, কল লগ এবং যোগাযোগের বিশ্লেষণ করুন।<br>
             <b>সাব-সেকশনসমূহ:</b><br>
-            - <b>কাস্টমাইজড সিডিআর:</b> তারিখ, ধরন, দিক অনুযায়ী কল লগ ফিল্টার করুন এবং নির্দিষ্ট তারিখের পর নতুন নাম্বার খুঁজুন।<br>
-            - <b>প্রোফাইল ও ডাউনলোড:</b> টার্গেটের প্রোফাইল দেখা, তথ্য সম্পাদনা, ছবি/এনআইডি আপলোড, বিপার্টি প্রোফাইল (ছবিসহ), লোকেশন, আইএমইআই মডেল এবং সম্পূর্ণ ওয়ার্ড রিপোর্ট ডাউনলোড করুন।<br>
+            - <b>কাস্টমাইজড সিডিআর:</b> তারিখ, ধরন, দিক অনুযায়ী কল লগ ফিল্টার করুন এবং নির্দিষ্ট তারিখের পর নতুন নাম্বার খুঁজুন।<br>
+            - <b>প্রোফাইল ও ডাউনলোড:</b> টার্গেটের প্রোফাইল দেখা, তথ্য সম্পাদনা, ছবি/এনআইডি আপলোড, বিপার্টি প্রোফাইল (ছবিসহ), লোকেশন, আইএমইআই মডেল এবং সম্পূর্ণ ওয়ার্ড রিপোর্ট ডাউনলোড করুন।<br>
             - <b>অ্যানালাইসিস হাব:</b> টোটাল/নাইট বিপার্টি, লোকেশন, আইএমইআই এবং একাধিক টার্গেটের মধ্যে কমন বিপার্টি/লোকেশন বিশ্লেষণ করুন।<br>
-            - <b>সর্টার টুলস:</b> বিপার্টি নাম্বার এক্সট্রাক্ট, আইএমইআই ফরম্যাট এবং অপারেটর অনুযায়ী নাম্বার সাজান।</p>
+            - <b>সর্টার টুলস:</b> বিপার্টি নাম্বার এক্সট্রাক্ট, আইএমইআই ফরম্যাট এবং অপারেটর অনুযায়ী নাম্বার সাজান।</p>
             
             <h3 style="color:#f3f4f6; font-size:18px; margin-top:20px; font-weight:700;">২. এসএমএস এনালাইজার (SMS Analyser)</h3>
-            <p style="font-size: 14px; color:#9ca3af;"><b>সংক্ষিপ্ত বিবরণ:</b> এসএমএস ডাম্প আপলোড করে কালানুক্রমিক মেসেজ হিস্ট্রি দেখুন। এটি স্বয়ংক্রিয়ভাবে ইউটিলিটি লিংক (ওয়াসা, ডিপিডিসি, ডেসকো) এবং এমএফএস নাম্বার কপি করার সুবিধা দেয়।</p>
+            <p style="font-size: 14px; color:#9ca3af;"><b>সংক্ষিপ্ত বিবরণ:</b> এসএমএস ডাম্প আপলোড করে কালানুক্রমিক মেসেজ হিস্ট্রি দেখুন। এটি স্বয়ংক্রিয়ভাবে ইউটিলিটি লিংক (ওয়াসা, ডিপিডিসি, ডেসকো) এবং এমএফএস নাম্বার কপি করার সুবিধা দেয়।</p>
 
             <h3 style="color:#f3f4f6; font-size:18px; margin-top:20px; font-weight:700;">৩. এমএফএস এনালাইজার (MFS Analyser)</h3>
-            <p style="font-size: 14px; color:#9ca3af;"><b>সংক্ষিপ্ত বিবরণ:</b> বিকাশ, নগদ এবং রকেটের স্টেটমেন্ট বিশ্লেষণ করুন। এটি অন্য পক্ষকে এজেন্ট বা পার্সোনাল হিসেবে চিহ্নিত করে, মোট লেনদেনের সারাংশ দেখায় এবং একাধিক অ্যাকাউন্টের মধ্যে কমন নাম্বার বিশ্লেষণ করতে দেয়।</p>
+            <p style="font-size: 14px; color:#9ca3af;"><b>সংক্ষিপ্ত বিবরণ:</b> বিকাশ, নগদ এবং রকেটের স্টেটমেন্ট বিশ্লেষণ করুন। এটি অন্য পক্ষকে এজেন্ট বা পার্সোনাল হিসেবে চিহ্নিত করে, মোট লেনদেনের সারাংশ দেখায় এবং একাধিক অ্যাকাউন্টের মধ্যে কমন নাম্বার বিশ্লেষণ করতে দেয়।</p>
 
             <h3 style="color:#f3f4f6; font-size:18px; margin-top:20px; font-weight:700;">৪. বিটিএস লোকেশন এনালাইজার (BTS Analyser)</h3>
             <p style="font-size: 14px; color:#9ca3af;"><b>সংক্ষিপ্ত বিবরণ:</b> একসাথে একাধিক এক্সেল ফাইল আপলোড করে ব্রাউজারের লোকাল স্টোরেজে (IndexedDB) বিটিএস ডাটা সেভ করুন। LAC/Cell ID, Lat/Lon অথবা সম্পূর্ণ CDR লগ পেস্ট করে বিটিএস এর লোকেশন সার্চ করা যাবে। এটি অটোমেটিক্যালি অপারেটর ডিটেক্ট করে ম্যাপে আজিমুথ সেক্টরসহ দেখাবে।</p>
 
-            <h3 style="color:#f3f4f6; font-size:18px; margin-top:20px; font-weight:700;">৫. টাওয়ার ডাম্প এনালাইজার (Tower Dump Analyser)</h3>
-            <p style="font-size: 14px; color:#9ca3af;"><b>সংক্ষিপ্ত বিবরণ:</b> একাধিক টাওয়ার ডাম্প ফাইল লোড করে কলাম ম্যাপিং (তারিখ, সময়, এ-পার্টি, বি-পার্টি, LAC, Cell, IMEI) করুন। আপনি এগুলোকে লোকেশন বা টাইম অনুযায়ী গ্রুপ করতে পারবেন (অটো-স্প্লিট সুবিধাসহ)। এটি একাধিক লোকেশন/টাইমের মধ্যে কমন এ-পার্টি, বি-পার্টি বা আইএমইআই খুঁজে বের করে। রেজাল্টে নাম্বারে ক্লিক করলে সেই নাম্বারের টাওয়ার ট্র্যাকিং ডিটেইলস দেখা যায়।</p>
+            <h3 style="color:#f3f4f6; font-size:18px; margin-top:20px; font-weight:700;">৫. টাওয়ার ডাম্প এনালাইজার (Tower Dump Analyser)</h3>
+            <p style="font-size: 14px; color:#9ca3af;"><b>সংক্ষিপ্ত বিবরণ:</b> একাধিক টাওয়ার ডাম্প ফাইল লোড করে কলাম ম্যাপিং (তারিখ, সময়, এ-পার্টি, বি-পার্টি, LAC, Cell, IMEI) করুন। আপনি এগুলোকে লোকেশন বা টাইম অনুযায়ী গ্রুপ করতে পারবেন (অটো-স্প্লিট সুবিধাসহ)। এটি একাধিক লোকেশন/টাইমের মধ্যে কমন এ-পার্টি, বি-পার্টি বা আইএমইআই খুঁজে বের করে। রেজাল্টে নাম্বারে ক্লিক করলে সেই নাম্বারের টাওয়ার ট্র্যাকিং ডিটেইলস দেখা যায়।</p>
           </div>
         </div>
       </div>
@@ -1004,10 +1004,75 @@
     // ==================== AUTH & LAYOUT ====================
     window.toggleSidebar = function() { const sidebar = document.getElementById('leftSidebar'); const wrapper = document.getElementById('mainContentWrapper'); if (isSidebarVisible) { sidebar.style.transform = 'translateX(-100%)'; wrapper.style.marginLeft = '0px'; isSidebarVisible = false; } else { sidebar.style.transform = 'translateX(0)'; wrapper.style.marginLeft = '260px'; isSidebarVisible = true; } }
     window.getOrCreateSessionId = function() { let sId = localStorage.getItem("krishDeviceSessionId"); if (!sId) { sId = 'sess_' + Math.random().toString(36).substring(2) + Date.now().toString(36); localStorage.setItem("krishDeviceSessionId", sId); } return sId; }
-    window.verifyCloudUserLogin = async function() { let email = document.getElementById('loginEmail').value.trim(); let pass = document.getElementById('loginPassword').value.trim(); let msgEl = document.getElementById('frontLoginMsg'); if (!email || !pass) { msgEl.innerText = "Please enter email and password!"; return; } try { let userCredential = await auth.signInWithEmailAndPassword(email, pass); let user = userCredential.user; currentUserEmail = user.email; let userDoc = await db.collection("authorized_users").doc(user.email).get(); if (!userDoc.exists) { msgEl.innerText = "Your account is not authorized by the Admin!"; await auth.signOut(); return; } let userData = userDoc.data(); if (userData.status !== "active") { msgEl.innerText = "Access Denied: Your account has been blocked or disabled by Admin."; await auth.signOut(); return; } currentSessionId = getOrCreateSessionId(); await db.collection("active_sessions").doc(user.email).set({ sessionId: currentSessionId, loginTime: firebase.firestore.FieldValue.serverTimestamp(), userAgent: navigator.userAgent }); isAdminUser = (user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()); localStorage.setItem("isKrishCloudLoggedIn", "true"); localStorage.setItem("krishUserEmail", user.email); startSessionWatcher(user.email); await loadCentralizedProfiles(); document.getElementById('frontLoginScreen').style.display = 'none'; document.getElementById('topHeaderBar').style.display = 'flex'; document.getElementById('appMainLayout').style.display = 'block'; document.getElementById('userInfoDisplay').innerHTML = `Connected: <strong class="text-blue-400">${user.email} (${isAdminUser ? 'Admin' : 'User'})</strong>`; if (isAdminUser) { document.getElementById('sidebarGlobalSearchContainer').style.display = 'block'; } } catch (error) { msgEl.innerText = "Login Failed: " + error.message; } }
+    
+    window.verifyCloudUserLogin = async function() { 
+        let email = document.getElementById('loginEmail').value.trim(); 
+        let pass = document.getElementById('loginPassword').value.trim(); 
+        let msgEl = document.getElementById('frontLoginMsg'); 
+        if (!email || !pass) { msgEl.innerText = "Please enter email and password!"; return; } 
+        try { 
+            await auth.signInWithEmailAndPassword(email, pass); 
+            msgEl.innerText = ""; 
+        } catch (error) { 
+            msgEl.innerText = "Login Failed: " + error.message; 
+        } 
+    }
+    
     function startSessionWatcher(email) { if (sessionListener) sessionListener(); sessionListener = db.collection("active_sessions").doc(email).onSnapshot(doc => { if (doc.exists) { let data = doc.data(); if (data.sessionId && data.sessionId !== currentSessionId) { alert("⚠️ Security Alert: Account logged in from another device. You are being logged out."); performLogout(); } } }); }
     window.performLogout = async function() { if (sessionListener) sessionListener(); try { await auth.signOut(); } catch(e) {} localStorage.removeItem("isKrishCloudLoggedIn"); localStorage.removeItem("krishUserEmail"); localStorage.removeItem("krishDeviceSessionId"); location.reload(); }
-    document.addEventListener("DOMContentLoaded", function() { loadPersistentProfileDB(); if (localStorage.getItem("isKrishCloudLoggedIn") === "true") { let savedEmail = localStorage.getItem("krishUserEmail"); if (savedEmail) { currentUserEmail = savedEmail; isAdminUser = (currentUserEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase()); currentSessionId = getOrCreateSessionId(); db.collection("active_sessions").doc(currentUserEmail).get().then(async doc => { if (doc.exists && doc.data().sessionId === currentSessionId) { startSessionWatcher(currentUserEmail); await loadCentralizedProfiles(); document.getElementById('frontLoginScreen').style.display = 'none'; document.getElementById('topHeaderBar').style.display = 'flex'; document.getElementById('appMainLayout').style.display = 'block'; document.getElementById('userInfoDisplay').innerHTML = `Connected: <strong class="text-blue-400">${currentUserEmail} (${isAdminUser ? 'Admin' : 'User'})</strong>`; if (isAdminUser) { document.getElementById('sidebarGlobalSearchContainer').style.display = 'block'; } } else { performLogout(); } }).catch(() => performLogout()); } } });
+    
+    document.addEventListener("DOMContentLoaded", function() {
+        loadPersistentProfileDB();
+
+        auth.onAuthStateChanged(async function(user) {
+            if (user) {
+                currentUserEmail = user.email;
+                isAdminUser = (user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+
+                try {
+                    let userDoc = await db.collection("authorized_users").doc(user.email).get();
+                    if (!userDoc.exists || userDoc.data().status !== "active") {
+                        alert("Access Denied: Your account is not authorized or has been blocked.");
+                        await auth.signOut();
+                        return;
+                    }
+                } catch(e) {
+                    console.error(e);
+                    await auth.signOut();
+                    return;
+                }
+
+                currentSessionId = getOrCreateSessionId();
+
+                try {
+                    let sessDoc = await db.collection("active_sessions").doc(user.email).get();
+                    if (!sessDoc.exists || sessDoc.data().sessionId !== currentSessionId) {
+                        await db.collection("active_sessions").doc(user.email).set({
+                            sessionId: currentSessionId,
+                            loginTime: firebase.firestore.FieldValue.serverTimestamp(),
+                            userAgent: navigator.userAgent
+                        });
+                    }
+                } catch(e) { console.error(e); }
+
+                startSessionWatcher(user.email);
+                await loadCentralizedProfiles();
+
+                document.getElementById('frontLoginScreen').style.display = 'none';
+                document.getElementById('topHeaderBar').style.display = 'flex';
+                document.getElementById('appMainLayout').style.display = 'block';
+                document.getElementById('userInfoDisplay').innerHTML = `Connected: <strong class="text-blue-400">${user.email} (${isAdminUser ? 'Admin' : 'User'})</strong>`;
+                if (isAdminUser) {
+                    document.getElementById('sidebarGlobalSearchContainer').style.display = 'block';
+                }
+            } else {
+                document.getElementById('frontLoginScreen').style.display = 'block';
+                document.getElementById('topHeaderBar').style.display = 'none';
+                document.getElementById('appMainLayout').style.display = 'none';
+            }
+        });
+    });
+
     window.openModule = function(mod) { ['landingPageContainer', 'mainDashboardContainer', 'smsAnalyzerModuleContainer', 'mfsAnalyzerModuleContainer', 'btsAnalyzerModuleContainer', 'towerDumpAnalyzerModuleContainer', 'userManualModuleContainer'].forEach(id => document.getElementById(id).style.display = 'none'); if (mod === 'home') { document.getElementById('landingPageContainer').style.display = 'block'; } else if (mod === 'cdr') { document.getElementById('mainDashboardContainer').style.display = 'block'; } else if (mod === 'sms') { document.getElementById('smsAnalyzerModuleContainer').style.display = 'block'; } else if (mod === 'mfs') { document.getElementById('mfsAnalyzerModuleContainer').style.display = 'block'; } else if (mod === 'bts') { document.getElementById('btsAnalyzerModuleContainer').style.display = 'block'; setTimeout(() => { if (btsMap) btsMap.invalidateSize(); }, 200); } else if (mod === 'towerdump') { document.getElementById('towerDumpAnalyzerModuleContainer').style.display = 'block'; } else if (mod === 'guide') { document.getElementById('userManualModuleContainer').style.display = 'block'; } }
     window.calculateLuhnCheckDigit = function(imei14) { let sum = 0; for (let i = 0; i < 14; i++) { let d = parseInt(imei14.charAt(i), 10); if (i % 2 === 1) { d *= 2; if (d > 9) d -= 9; } sum += d; } let mod = sum % 10; return mod === 0 ? 0 : 10 - mod; }
     window.correctImeiNumber = function(rawImei) { let clean = String(rawImei || "").replace(/\D/g, ""); if (clean.length === 14) { return clean + calculateLuhnCheckDigit(clean); } else if (clean.length >= 15) { let base14 = clean.slice(0, 14); return base14 + calculateLuhnCheckDigit(base14); } return clean; }
@@ -1016,7 +1081,42 @@
     // ==================== GLOBAL PROFILE LOGIC ====================
     window.handleTargetedGlobalCtrlV = function(e) { const items = (e.clipboardData || e.originalEvent.clipboardData).items; if (!items) return; for (let i in items) { if (items[i].kind === 'file' && items[i].type.startsWith('image/')) { let blob = items[i].getAsFile(); let reader = new FileReader(); reader.onload = ev => { if (currentlyFocusedBPartyBox) { let bNum = currentlyFocusedBPartyBox; if (!globalProfileDB[activeTargetNumber]) globalProfileDB[activeTargetNumber] = {}; if (!globalProfileDB[activeTargetNumber].BPartyProfiles) globalProfileDB[activeTargetNumber].BPartyProfiles = {}; if (!globalProfileDB[activeTargetNumber].BPartyProfiles[bNum]) globalProfileDB[activeTargetNumber].BPartyProfiles[bNum] = { details: "", pic: "" }; globalProfileDB[activeTargetNumber].BPartyProfiles[bNum].pic = ev.target.result; savePersistentProfileDB(); renderMultiTables(); alert("Image pasted successfully to selected B-Party profile!"); } else if (activeTargetNumber) { if (!globalProfileDB[activeTargetNumber]) globalProfileDB[activeTargetNumber] = {}; globalProfileDB[activeTargetNumber].Image = ev.target.result; savePersistentProfileDB(); renderActiveTargetProfile(); alert("Target Photo pasted successfully!"); } }; reader.readAsDataURL(blob); e.preventDefault(); break; } } }
     window.loadPersistentProfileDB = function() { try { let saved = localStorage.getItem("krishGlobalProfileDB"); if (saved) globalProfileDB = JSON.parse(saved); } catch(e) { globalProfileDB = {}; } }
-    window.savePersistentProfileDB = function() { try { let imeiInputs = document.querySelectorAll('#container-imei input[type="text"]'); if (imeiInputs.length > 0) { if (!globalProfileDB[activeTargetNumber]) globalProfileDB[activeTargetNumber] = {}; if (!globalProfileDB[activeTargetNumber].ImeiModels) globalProfileDB[activeTargetNumber].ImeiModels = {}; imeiInputs.forEach(inp => { let row = inp.closest('tr'); if (row) { let imeiText = row.querySelector('b').innerText.trim(); globalProfileDB[activeTargetNumber].ImeiModels[imeiText] = inp.value.trim(); } }); } localStorage.setItem("krishGlobalProfileDB", JSON.stringify(globalProfileDB)); if (activeTargetNumber) { let prof = globalProfileDB[activeTargetNumber] || {}; prof.SubmittedBy = currentUserEmail; db.collection("shared_profiles").doc(activeTargetNumber).set({ targetNumber: activeTargetNumber, name: prof.Name || "", connectedWith: prof.ConnectedWith || "", image: prof.Image || "", nidImage: prof.NidImage || "", bpartyProfiles: prof.BPartyProfiles || {}, imeiModels: prof.ImeiModels || {}, submittedBy: currentUserEmail, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }).catch(err => console.log("Sync error:", err)); } } catch(e) {} }
+    
+    window.savePersistentProfileDB = function() { 
+        try { 
+            let imeiInputs = document.querySelectorAll('#container-imei input[type="text"]'); 
+            if (imeiInputs.length > 0) { 
+                if (!globalProfileDB[activeTargetNumber]) globalProfileDB[activeTargetNumber] = {}; 
+                if (!globalProfileDB[activeTargetNumber].ImeiModels) globalProfileDB[activeTargetNumber].ImeiModels = {}; 
+                imeiInputs.forEach(inp => { 
+                    let row = inp.closest('tr'); 
+                    if (row) { 
+                        let imeiText = row.querySelector('b').innerText.trim(); 
+                        globalProfileDB[activeTargetNumber].ImeiModels[imeiText] = inp.value.trim(); 
+                    } 
+                }); 
+            } 
+            localStorage.setItem("krishGlobalProfileDB", JSON.stringify(globalProfileDB)); 
+            
+            if (activeTargetNumber && window._manualSaveRequested) { 
+                let prof = globalProfileDB[activeTargetNumber] || {}; 
+                prof.SubmittedBy = currentUserEmail; 
+                db.collection("shared_profiles").doc(activeTargetNumber).set({ 
+                    targetNumber: activeTargetNumber, 
+                    name: prof.Name || "", 
+                    connectedWith: prof.ConnectedWith || "", 
+                    image: prof.Image || "", 
+                    nidImage: prof.NidImage || "", 
+                    bpartyProfiles: prof.BPartyProfiles || {}, 
+                    imeiModels: prof.ImeiModels || {}, 
+                    submittedBy: currentUserEmail, 
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp() 
+                }, { merge: true }).catch(err => console.log("Sync error:", err)); 
+                window._manualSaveRequested = false; 
+            } 
+        } catch(e) { console.error(e); } 
+    }
+    
     window.exportFullMemoryBackup = function() { let backupData = { globalProfileDB: globalProfileDB, mfsAccountProfiles: mfsAccountProfiles, version: "3.1", exportDate: new Date().toISOString() }; let blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' }); let url = URL.createObjectURL(blob); let a = document.createElement('a'); a.href = url; a.download = `ForensicSuite_Memory_Backup_${new Date().toISOString().slice(0,10)}.json`; document.body.appendChild(a); a.click(); document.body.removeChild(a); alert("Full memory backup exported successfully!"); }
     window.importFullMemoryBackup = function(event) { let file = event.target.files[0]; if (!file) return; let reader = new FileReader(); reader.onload = function(e) { try { let parsed = JSON.parse(e.target.result); if (parsed.globalProfileDB) { globalProfileDB = parsed.globalProfileDB; localStorage.setItem("krishGlobalProfileDB", JSON.stringify(globalProfileDB)); } if (parsed.mfsAccountProfiles) { mfsAccountProfiles = parsed.mfsAccountProfiles; localStorage.setItem('krish_mfs_profiles', JSON.stringify(mfsAccountProfiles)); } alert("Memory backup restored successfully!"); location.reload(); } catch(err) { alert("Error restoring backup file: " + err.message); } }; reader.readAsText(file); }
     window.loadCentralizedProfiles = async function() { try { let snapshot = await db.collection("shared_profiles").get(); centralAllProfilesDB = {}; snapshot.forEach(doc => { let data = doc.data(); centralAllProfilesDB[data.targetNumber] = data; }); } catch(e) { console.log("Error loading central profiles:", e); } }
@@ -1037,35 +1137,32 @@
     window.formatBPartyNumber = function(val) {
         if (!val) return "";
         let str = String(val).trim();
-        
-        if (/[a-zA-Z\u0980-\u09FF]/.test(str) && !str.startsWith('+')) return str;
-        let digits = str.replace(/[^\d\+]/g, ""); 
+        let digits = str.replace(/[^\d\+]/g, "");
 
-        if (digits.startsWith('+88096')) return '0' + digits.slice(4);
-        if (digits.startsWith('88096')) return '0' + digits.slice(3);
-        if (digits.startsWith('096')) return digits;
+        let ipCheck = digits.replace(/^\+?88?0?/, "");
+        if (ipCheck.startsWith("096")) {
+            return str; 
+        }
 
-        if (digits.startsWith('+') && !digits.startsWith('+880')) return digits;
-        if (digits.startsWith('00') && !digits.startsWith('00880')) return '+' + digits.slice(2);
+        let last10 = digits.slice(-10);
+        if (/^1[3-9]\d{8}$/.test(last10)) {
+            return "+880" + last10; 
+        }
 
-        if (digits.startsWith('+880')) return digits;
-        if (digits.startsWith('880')) return '+' + digits;
-        if (digits.startsWith('01')) return '+88' + digits;
-        
-        if (digits.length === 10 && digits.startsWith('1')) return '+880' + digits;
-        if (digits.length === 13 && digits.startsWith('880')) return '+' + digits;
+        if (digits.startsWith("+") && !digits.startsWith("+880")) {
+            return digits;
+        }
 
         return str;
     }
 
     window.getNumberDetails = function(val, filterMode) {
-        let formatted = formatBPartyNumber(val);
-        let type = 'Other';
-        let label = '';
+        let str = String(val || "").trim();
+        let digits = str.replace(/[^\d\+]/g, "");
 
-        if (/^096/.test(formatted)) {
-            type = 'IP';
-            let prefix = formatted.slice(0, 5); 
+        let ipCheck = digits.replace(/^\+?88?0?/, "");
+        if (ipCheck.startsWith("096")) {
+            let prefix = ipCheck.slice(0, 5);
             const ipProviders = {
                 '09601': 'BTS', '09602': 'ISN', '09603': 'Royal Green', '09604': 'Fusion Net',
                 '09606': 'Agni', '09609': 'BOL', '09610': 'ADN', '09611': 'Amber IT',
@@ -1076,11 +1173,30 @@
                 '09669': 'ConnectBD', '09677': 'BRACNet', '09678': 'Link3',
                 '09696': 'BTCL', '09697': 'BTCL'
             };
-            label = ipProviders[prefix] || 'IPTSP';
-        } 
-        else if (formatted.startsWith('+') && !formatted.startsWith('+880')) {
-            type = 'Foreign';
-            let ccMatch = formatted.match(/^\+(\d{1,3})/);
+            let label = ipProviders[prefix] || 'IPTSP';
+            return {
+                formatted: str,
+                type: "IP",
+                label: label,
+                display: str + ` <span style="color:#38bdf8; font-size:10px; font-weight:bold;">(${label})</span>`
+            };
+        }
+
+        let last10 = digits.slice(-10);
+        if (/^1[3-9]\d{8}$/.test(last10)) {
+            let formatted = "+880" + last10; 
+            let label = (filterMode === 'original') ? '' : 'BD';
+            return {
+                formatted: formatted,
+                type: "Original",
+                label: label,
+                display: label ? formatted + ` <span style="color:#38bdf8; font-size:10px; font-weight:bold;">(BD)</span>` : formatted
+            };
+        }
+
+        if (digits.startsWith("+") && !digits.startsWith("+880")) {
+            let ccMatch = digits.match(/^\+(\d{1,3})/);
+            let label = "Foreign";
             if (ccMatch) {
                 let cc = ccMatch[1];
                 const countryCodes = {
@@ -1100,17 +1216,19 @@
                 };
                 label = countryCodes[cc] || `Country +${cc}`;
             }
-        }
-        else if (/^\+8801[3-9]\d{8}$/.test(formatted)) {
-            type = 'Original';
-            if (filterMode === 'original') label = ''; else label = 'BD';
+            return {
+                formatted: digits,
+                type: "Foreign",
+                label: label,
+                display: digits + ` <span style="color:#38bdf8; font-size:10px; font-weight:bold;">(${label})</span>`
+            };
         }
 
-        return { 
-            formatted, 
-            type, 
-            label, 
-            display: label ? `${formatted} <span style="color:#38bdf8; font-size:10px; font-weight:bold;">(${label})</span>` : formatted 
+        return {
+            formatted: str,
+            type: "Other",
+            label: "",
+            display: str
         };
     }
 
@@ -1444,13 +1562,10 @@
             let bp = bProfiles[b] || {};
             let bpPicHtml = bp.pic ? `<img src="${bp.pic}" style="width:70px; height:80px; object-fit:cover;"><br>` : '';
             let numDetails = getNumberDetails(b, reportFilter);
-            
-            // Generate display string with bracket for IP/Foreign
             let bpNumDisplay = numDetails.formatted;
             if (numDetails.type === 'IP' || numDetails.type === 'Foreign') {
                 bpNumDisplay += ` <span style="font-size: 8pt; color: #444;">(${numDetails.label})</span>`;
             }
-
             let usageText = `${bMap[b].count} times & ${bMap[b].dur}s<br>${dRange}`;
             htmlContent += `<tr><td>${bpPicHtml}<b>${bpNumDisplay}</b></td><td>${bp.details || ''}</td><td>${usageText}</td></tr>`;
         });
@@ -1467,13 +1582,10 @@
             let bp = bProfiles[b] || {};
             let bpPicHtml = bp.pic ? `<img src="${bp.pic}" style="width:70px; height:80px; object-fit:cover;"><br>` : '';
             let numDetails = getNumberDetails(b, reportFilter);
-            
-            // Generate display string with bracket for IP/Foreign
             let bpNumDisplay = numDetails.formatted;
             if (numDetails.type === 'IP' || numDetails.type === 'Foreign') {
                 bpNumDisplay += ` <span style="font-size: 8pt; color: #444;">(${numDetails.label})</span>`;
             }
-
             let usageText = `${nMap[b].count} times & ${nMap[b].dur}s<br>${dRange}`;
             htmlContent += `<tr><td>${bpPicHtml}<b>${bpNumDisplay}</b></td><td>${bp.details || ''}</td><td>${usageText}</td></tr>`;
         });
@@ -1629,7 +1741,7 @@
             }
             
             if (newNumbers.length === 0) {
-                alert(`❌ ${dateVal} তারিখের পর কোনো নতুন নাম্বার পাওয়া যায়নি। (মোট রেকর্ড চেক করা হয়েছে: ${rows.length} টি)`);
+                alert(`❌ ${dateVal} তারিখের পর কোনো নতুন নাম্বার পাওয়া যায়নি। (মোট রেকর্ড চেক করা হয়েছে: ${rows.length} টি)`);
                 document.getElementById('newNumbersResultSection').style.display = 'none';
                 return;
             }
@@ -1649,7 +1761,7 @@
             document.getElementById('container-new-numbers').innerHTML = h;
             document.getElementById('newNumbersResultSection').style.display = 'block';
             document.getElementById('newNumbersResultSection').scrollIntoView({ behavior: 'smooth' });
-            alert(`✅ সফলভাবে ${newNumbers.length} টি নতুন নাম্বার পাওয়া গেছে! টেবিলটি দেখুন।`);
+            alert(`✅ সফলভাবে ${newNumbers.length} টি নতুন নাম্বার পাওয়া গেছে! টেবিলটি দেখুন।`);
         } catch (err) { console.error(err); alert("Error processing new numbers: " + err.message); }
     }
 
@@ -2212,22 +2324,39 @@
                 if (!rawStr) return null;
                 let str = String(rawStr).trim();
                 let num = str.replace(/\\D/g, '');
+
+                // 1. Check IP/VoIP (096... or 88096...)
                 let isIP = false;
                 if ((num.startsWith('096') || num.startsWith('88096')) && num.length >= 9) isIP = true;
-                let isLocal = false;
-                if ((num.length >= 11 && num.startsWith('01')) || (num.length >= 13 && num.startsWith('8801'))) isLocal = true;
                 if (typeFilter === 'ip') return isIP ? str : null;
-                if (typeFilter === 'original') {
-                    if (isLocal) {
-                        if (num.startsWith('880')) return "+" + num;
-                        if (num.startsWith('01')) return "+88" + num;
-                        if (num.startsWith('1') && num.length === 10) return "+880" + num;
+                if (isIP) return null; // If looking for original/foreign, skip IP
+
+                // 2. Check Original BD (Right-to-Left last 10 digits OR embedded 11 digits)
+                let isOriginal = false;
+                let finalNum = str;
+                
+                // Strong regex to find 01[3-9]xxxxxxxx inside the string, even if there are extra digits (like 880711...)
+                let bdMatch = num.match(/01[3-9]\\d{8}/);
+                
+                if (bdMatch) {
+                    isOriginal = true;
+                    finalNum = "+88" + bdMatch[0]; // e.g., "+8801716590036"
+                } else if (num.startsWith('880') || num.startsWith('88')) {
+                    let last10 = num.slice(-10);
+                    if (/^1[3-9]\\d{8}$/.test(last10)) {
+                        isOriginal = true;
+                        finalNum = "+88" + last10;
                     }
-                    return null;
+                } else if (num.length === 10 && /^1[3-9]\\d{8}$/.test(num)) {
+                    isOriginal = true;
+                    finalNum = "+880" + num;
+                }
+
+                if (typeFilter === 'original') {
+                    return isOriginal ? finalNum : null;
                 }
                 if (typeFilter === 'foreign') {
-                    if (!isIP && !isLocal && num.length > 5) return str;
-                    return null;
+                    return isOriginal ? null : (str.startsWith('+') ? str : "+" + num);
                 }
                 return null;
             }
